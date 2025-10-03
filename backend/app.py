@@ -45,12 +45,21 @@ ROOM_DATA = {
     'football': {
         'name': 'Football Stadium',
         'description': 'Infiltrate UEFA database to expose corruption',
+        'database_schema': {
+            'teams': ['team_id', 'team_name', 'city', 'league', 'founded_year', 'stadium_capacity'],
+            'players': ['player_id', 'name', 'team_id', 'position', 'age', 'salary', 'goals_scored'],
+            'matches': ['match_id', 'home_team_id', 'away_team_id', 'match_date', 'home_score', 'away_score', 'attendance']
+        },
         'stages': [
             {
                 'id': 1,
                 'title': 'Database Access',
                 'description': 'Gain access to the UEFA player database. Find all players in the system.',
                 'story': 'You\'ve breached the outer firewall! The UEFA database is open. Start by exploring what data is available.',
+                'database_info': '''Available Tables:
+📋 teams (team_id, team_name, city, league, founded_year, stadium_capacity)
+⚽ players (player_id, name, team_id, position, age, salary, goals_scored)
+🏆 matches (match_id, home_team_id, away_team_id, match_date, home_score, away_score, attendance)''',
                 'target_query': 'SELECT * FROM players',
                 'expected_columns': ['player_id', 'name', 'team_id', 'position', 'age', 'salary', 'goals_scored'],
                 'hints': [
@@ -64,6 +73,10 @@ ROOM_DATA = {
                 'title': 'Identify Top Scorers',
                 'description': 'Find all forwards who scored more than 20 goals.',
                 'story': 'Good work! Now we need to identify the star players. Find the top goal scorers among forwards.',
+                'database_info': '''Available Tables:
+📋 teams (team_id, team_name, city, league, founded_year, stadium_capacity)
+⚽ players (player_id, name, team_id, position, age, salary, goals_scored)
+🏆 matches (match_id, home_team_id, away_team_id, match_date, home_score, away_score, attendance)''',
                 'target_query': 'SELECT name, position, goals_scored FROM players WHERE position = \'Forward\' AND goals_scored > 20',
                 'expected_columns': ['name', 'position', 'goals_scored'],
                 'validation': {
@@ -83,6 +96,10 @@ ROOM_DATA = {
                 'title': 'Team Salary Analysis',
                 'description': 'Calculate average salary for each team. Show team name and average salary.',
                 'story': 'Excellent! Now we need to understand the money flow. Which teams are spending the most on player salaries?',
+                'database_info': '''Available Tables:
+📋 teams (team_id, team_name, city, league, founded_year, stadium_capacity)
+⚽ players (player_id, name, team_id, position, age, salary, goals_scored)
+🏆 matches (match_id, home_team_id, away_team_id, match_date, home_score, away_score, attendance)''',
                 'target_query': 'SELECT t.team_name, AVG(p.salary) as avg_salary FROM teams t JOIN players p ON t.team_id = p.team_id GROUP BY t.team_id, t.team_name ORDER BY avg_salary DESC',
                 'expected_columns': ['team_name', 'avg_salary'],
                 'validation': {
@@ -103,6 +120,10 @@ ROOM_DATA = {
                 'title': 'Upset Matches',
                 'description': 'Find matches where the home team lost (scored fewer goals than away team).',
                 'story': 'Strange patterns emerging... Find matches where the home team lost to the away team.',
+                'database_info': '''Available Tables:
+📋 teams (team_id, team_name, city, league, founded_year, stadium_capacity)
+⚽ players (player_id, name, team_id, position, age, salary, goals_scored)
+🏆 matches (match_id, home_team_id, away_team_id, match_date, home_score, away_score, attendance)''',
                 'target_query': 'SELECT m.match_id, ht.team_name as home_team, at.team_name as away_team, m.home_score, m.away_score, m.match_date FROM matches m JOIN teams ht ON m.home_team_id = ht.team_id JOIN teams at ON m.away_team_id = at.team_id WHERE m.home_score < m.away_score',
                 'expected_columns': ['match_id', 'home_team', 'away_team', 'home_score', 'away_score', 'match_date'],
                 'validation': {
@@ -122,6 +143,10 @@ ROOM_DATA = {
                 'title': 'Salary Outliers',
                 'description': 'Find players whose salary is more than 2x their team\'s average salary.',
                 'story': 'Final evidence needed! Find players with suspiciously high salaries compared to their teammates.',
+                'database_info': '''Available Tables:
+📋 teams (team_id, team_name, city, league, founded_year, stadium_capacity)
+⚽ players (player_id, name, team_id, position, age, salary, goals_scored)
+🏆 matches (match_id, home_team_id, away_team_id, match_date, home_score, away_score, attendance)''',
                 'target_query': 'SELECT p.name, p.salary, t.team_name, (SELECT AVG(salary) FROM players WHERE team_id = p.team_id) as team_avg_salary FROM players p JOIN teams t ON p.team_id = t.team_id WHERE p.salary > 2 * (SELECT AVG(salary) FROM players WHERE team_id = p.team_id)',
                 'expected_columns': ['name', 'salary', 'team_name', 'team_avg_salary'],
                 'validation': {
@@ -180,14 +205,12 @@ def execute_sql():
             }), 500
             
         conn = sqlite3.connect(sample_db_path)
-        conn.row_factory = sqlite3.Row  # Enable column access by name
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        # Execute query with timeout (5 seconds)
         cursor.execute(query)
         results = cursor.fetchall()
         
-        # Convert results to list of dictionaries
         if results:
             columns = [description[0] for description in cursor.description]
             data_results = []
@@ -226,14 +249,12 @@ def execute_sql_room(room_id):
                 'error': 'No query provided'
             }), 400
         
-        # Security: Only allow SELECT statements
         if not query.upper().startswith('SELECT'):
             return jsonify({
                 'success': False,
                 'error': 'Only SELECT queries are allowed for security reasons'
             }), 400
         
-        # Connect to room-specific database
         db_path = f'database/{room_id}.db'
         if not os.path.exists(db_path):
             return jsonify({
@@ -245,11 +266,9 @@ def execute_sql_room(room_id):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        # Execute query
         cursor.execute(query)
         results = cursor.fetchall()
         
-        # Convert results to list of dictionaries
         if results:
             columns = [description[0] for description in cursor.description]
             data_results = []
@@ -320,7 +339,6 @@ def create_user():
         if not username:
             return jsonify({'success': False, 'error': 'Username is required'}), 400
         
-        # Check if user exists
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             return jsonify({
@@ -329,7 +347,6 @@ def create_user():
                 'message': 'User already exists'
             })
         
-        # Create new user
         user = User(username=username)
         db.session.add(user)
         db.session.commit()
@@ -350,17 +367,14 @@ def create_sample_database():
     """Create sample database with student data"""
     sample_db_path = 'database/sample.db'
     
-    # Create database directory if it doesn't exist
     if not os.path.exists('database'):
         os.makedirs('database')
         print("Created database directory")
     
-    # Only create if doesn't exist
     if not os.path.exists(sample_db_path):
         conn = sqlite3.connect(sample_db_path)
         cursor = conn.cursor()
         
-        # Create students table
         cursor.execute('''
             CREATE TABLE students (
                 id INTEGER PRIMARY KEY,
@@ -371,7 +385,6 @@ def create_sample_database():
             )
         ''')
         
-        # Insert sample data
         sample_students = [
             (1, 'Alice Johnson', 'Computer Science', 3.8, '2022-09-01'),
             (2, 'Bob Smith', 'Mathematics', 3.5, '2022-09-01'),
@@ -390,7 +403,6 @@ def create_sample_database():
             sample_students
         )
         
-        # Create courses table
         cursor.execute('''
             CREATE TABLE courses (
                 course_id INTEGER PRIMARY KEY,
@@ -414,7 +426,6 @@ def create_sample_database():
             sample_courses
         )
         
-        # Create enrollments table
         cursor.execute('''
             CREATE TABLE enrollments (
                 enrollment_id INTEGER PRIMARY KEY,
@@ -445,7 +456,6 @@ def create_sample_database():
         conn.commit()
         conn.close()
         print("Sample database created successfully!")
-        print("Available tables: students, courses, enrollments")
         return True
     else:
         print("Sample database already exists")
@@ -457,13 +467,11 @@ def create_football_database():
     
     if not os.path.exists('database'):
         os.makedirs('database')
-        print("Created database directory")
     
     if not os.path.exists(football_db_path):
         conn = sqlite3.connect(football_db_path)
         cursor = conn.cursor()
         
-        # Create teams table
         cursor.execute('''
             CREATE TABLE teams (
                 team_id INTEGER PRIMARY KEY,
@@ -475,7 +483,6 @@ def create_football_database():
             )
         ''')
         
-        # Create players table
         cursor.execute('''
             CREATE TABLE players (
                 player_id INTEGER PRIMARY KEY,
@@ -489,7 +496,6 @@ def create_football_database():
             )
         ''')
         
-        # Create matches table
         cursor.execute('''
             CREATE TABLE matches (
                 match_id INTEGER PRIMARY KEY,
@@ -504,7 +510,6 @@ def create_football_database():
             )
         ''')
         
-        # Insert sample teams
         teams_data = [
             (1, 'Manchester United', 'Manchester', 'Premier League', 1878, 75000),
             (2, 'Barcelona', 'Barcelona', 'La Liga', 1899, 99000),
@@ -518,7 +523,6 @@ def create_football_database():
         
         cursor.executemany('INSERT INTO teams VALUES (?, ?, ?, ?, ?, ?)', teams_data)
         
-        # Insert sample players
         players_data = [
             (1, 'Marcus Rashford', 1, 'Forward', 26, 200000, 12),
             (2, 'Bruno Fernandes', 1, 'Midfielder', 29, 180000, 8),
@@ -539,7 +543,6 @@ def create_football_database():
         
         cursor.executemany('INSERT INTO players VALUES (?, ?, ?, ?, ?, ?, ?)', players_data)
         
-        # Insert sample matches
         matches_data = [
             (1, 1, 2, '2024-03-15', 2, 1, 73000),
             (2, 3, 4, '2024-03-16', 3, 0, 75000),
@@ -556,7 +559,6 @@ def create_football_database():
         conn.commit()
         conn.close()
         print("Football database created successfully!")
-        print("Available tables: teams, players, matches")
         return True
     else:
         print("Football database already exists")
@@ -565,14 +567,9 @@ def create_football_database():
 def initialize_app():
     """Initialize database and sample data"""
     with app.app_context():
-        # Create main database tables
         db.create_all()
         print("Main database tables created!")
-        
-        # Create sample database (existing)
         create_sample_database()
-        
-        # Create football database (new)
         create_football_database()
 
 if __name__ == '__main__':
@@ -582,8 +579,6 @@ if __name__ == '__main__':
     print("=" * 50)
     print("Server running on http://localhost:5000")
     print("Frontend should connect from http://localhost:3000")
-    print("Test endpoint: http://localhost:5000/api/test")
-    print("Ready to receive SQL queries!")
     print("=" * 50)
     
     app.run(debug=True, port=5000, host='0.0.0.0')

@@ -1,4 +1,22 @@
-/* Football Stadium Theme */
+.database-info-box {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 15px;
+  border: 2px solid rgba(0, 255, 0, 0.5);
+  margin-top: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.database-info-box pre {
+  margin: 0;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95em;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}/* Football Stadium Theme */
 .football-room {
   min-height: 100vh;
   background: 
@@ -203,6 +221,25 @@
   margin-top: 25px;
   box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
   font-weight: bold;
+}
+
+.database-info-box {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 20px;
+  border-radius: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  margin-top: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.database-info-box pre {
+  margin: 0;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95em;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .editor-section {

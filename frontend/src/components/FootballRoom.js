@@ -12,12 +12,10 @@ const FootballRoom = ({ onBack }) => {
   const [stageComplete, setStageComplete] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
 
-  // Load room data on component mount
   useEffect(() => {
     loadRoomData();
   }, []);
 
-  // Load stage data when stage changes
   useEffect(() => {
     if (roomData) {
       loadStageData();
@@ -50,10 +48,9 @@ const FootballRoom = ({ onBack }) => {
   };
 
   const handleQuerySuccess = (result) => {
-    // Check if query matches expected result
     if (result.success && result.row_count > 0) {
       setStageComplete(true);
-      const stageScore = 100 - (currentHintIndex * 20); // Lose points for using hints
+      const stageScore = 100 - (currentHintIndex * 20);
       setTotalScore(totalScore + stageScore);
     }
   };
@@ -92,7 +89,6 @@ const FootballRoom = ({ onBack }) => {
 
   return (
     <div className="football-room">
-      {/* Header */}
       <div className="room-header">
         <h1>⚽ {roomData.name}</h1>
         <div className="room-stats">
@@ -107,18 +103,20 @@ const FootballRoom = ({ onBack }) => {
         </div>
       </div>
 
-      {/* Stage Content */}
       <div className="stage-content">
-        {/* Story Section */}
         <div className="story-section">
           <h2>{stageData.title}</h2>
           <p className="story-text">{stageData.story}</p>
           <div className="objective">
             <strong>Objective:</strong> {stageData.description}
           </div>
+          {stageData.database_info && (
+            <div className="database-info-box">
+              <pre>{stageData.database_info}</pre>
+            </div>
+          )}
         </div>
 
-        {/* SQL Editor Section */}
         <div className="editor-section">
           <SQLEditor 
             roomId="football"
@@ -126,7 +124,6 @@ const FootballRoom = ({ onBack }) => {
           />
         </div>
 
-        {/* Hints Section */}
         <div className="hints-section">
           <button 
             className="hint-button"
@@ -143,7 +140,6 @@ const FootballRoom = ({ onBack }) => {
           )}
         </div>
 
-        {/* Stage Complete Section */}
         {stageComplete && (
           <div className="stage-complete">
             <h3>🎉 Stage Complete!</h3>
@@ -165,7 +161,6 @@ const FootballRoom = ({ onBack }) => {
         )}
       </div>
 
-      {/* Progress Bar */}
       <div className="progress-bar">
         <div 
           className="progress-fill" 
