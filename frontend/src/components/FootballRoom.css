@@ -1,25 +1,116 @@
+/* Football Stadium Theme */
 .football-room {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  background: 
+    linear-gradient(180deg, rgba(20, 30, 48, 0.85) 0%, rgba(30, 50, 80, 0.9) 100%),
+    repeating-linear-gradient(
+      0deg,
+      #1a5f1a 0px,
+      #1a5f1a 40px,
+      #0d4d0d 40px,
+      #0d4d0d 80px
+    );
   color: white;
   padding: 20px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Stadium Lights Effect */
+.football-room::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 300px;
+  background: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Field Lines */
+.football-room::after {
+  content: '';
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 1400px;
+  height: 80vh;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Back to Menu Button - Fixed Position */
+.back-to-menu-button {
+  position: fixed !important;
+  top: 20px !important;
+  left: 20px !important;
+  background: linear-gradient(135deg, #ff3b3b 0%, #ff6b6b 100%);
+  backdrop-filter: blur(10px);
+  border: 3px solid #fff;
+  color: white;
+  padding: 15px 30px;
+  font-size: 1.1em;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  z-index: 10000 !important;
+  font-family: 'Arial Black', Arial, sans-serif;
+  box-shadow: 0 4px 15px rgba(255, 59, 59, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.back-to-menu-button:hover {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff3b3b 100%);
+  transform: translateX(-5px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(255, 59, 59, 0.6);
 }
 
 .room-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  padding: 25px 35px;
+  background: linear-gradient(135deg, rgba(0, 100, 0, 0.3) 0%, rgba(0, 150, 0, 0.2) 100%);
+  border-radius: 15px;
   margin-bottom: 30px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(15px);
+  margin-top: 70px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 10;
+}
+
+.room-header::before {
+  content: '⚽';
+  position: absolute;
+  font-size: 100px;
+  opacity: 0.1;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .room-header h1 {
   margin: 0;
-  font-size: 2.5em;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-size: 2.8em;
+  text-shadow: 
+    2px 2px 0 #000,
+    -2px -2px 0 #000,
+    2px -2px 0 #000,
+    -2px 2px 0 #000,
+    0 0 20px rgba(255, 255, 255, 0.5);
+  font-family: 'Arial Black', Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .room-stats {
@@ -31,57 +122,96 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 15px 25px;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 215, 0, 0.5);
 }
 
 .stat-label {
   font-size: 0.9em;
-  opacity: 0.8;
+  opacity: 0.9;
   margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
 }
 
 .stat-value {
-  font-size: 1.5em;
+  font-size: 2em;
   font-weight: bold;
   color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+  font-family: 'Arial Black', Arial, sans-serif;
 }
 
 .stage-content {
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
+  z-index: 10;
 }
 
 .story-section {
-  background: rgba(255, 255, 255, 0.15);
-  padding: 30px;
-  border-radius: 15px;
+  background: linear-gradient(135deg, rgba(0, 80, 0, 0.6) 0%, rgba(0, 120, 0, 0.5) 100%);
+  padding: 35px;
+  border-radius: 20px;
   margin-bottom: 30px;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.story-section::before {
+  content: '⚽';
+  position: absolute;
+  font-size: 200px;
+  opacity: 0.05;
+  right: -50px;
+  bottom: -50px;
+  transform: rotate(-15deg);
 }
 
 .story-section h2 {
   margin-top: 0;
   color: #ffd700;
-  font-size: 2em;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-size: 2.2em;
+  text-shadow: 
+    2px 2px 0 #000,
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000;
+  font-family: 'Arial Black', Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .story-text {
-  font-size: 1.2em;
-  line-height: 1.6;
+  font-size: 1.3em;
+  line-height: 1.8;
   margin: 20px 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .objective {
-  background: rgba(255, 215, 0, 0.2);
-  padding: 15px;
-  border-radius: 10px;
-  border-left: 4px solid #ffd700;
-  margin-top: 20px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 165, 0, 0.2) 100%);
+  padding: 20px;
+  border-radius: 15px;
+  border-left: 6px solid #ffd700;
+  margin-top: 25px;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  font-weight: bold;
 }
 
 .editor-section {
   margin-bottom: 30px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 25px;
+  border-radius: 15px;
+  border: 3px solid rgba(0, 100, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .hints-section {
@@ -90,35 +220,41 @@
 }
 
 .hint-button {
-  background: rgba(255, 215, 0, 0.3);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.4) 0%, rgba(255, 165, 0, 0.3) 100%);
   color: white;
-  border: 2px solid #ffd700;
-  padding: 15px 30px;
-  font-size: 1.1em;
-  border-radius: 10px;
+  border: 3px solid #ffd700;
+  padding: 18px 40px;
+  font-size: 1.2em;
+  border-radius: 50px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+  font-family: 'Arial Black', Arial, sans-serif;
 }
 
 .hint-button:hover:not(:disabled) {
-  background: rgba(255, 215, 0, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.6) 0%, rgba(255, 165, 0, 0.5) 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
 }
 
 .hint-button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  filter: grayscale(50%);
 }
 
 .hint-box {
-  background: rgba(255, 215, 0, 0.2);
-  padding: 20px;
-  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 165, 0, 0.2) 100%);
+  padding: 25px;
+  border-radius: 15px;
   margin-top: 20px;
-  border: 2px solid #ffd700;
+  border: 3px solid #ffd700;
   animation: slideDown 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
 }
 
 @keyframes slideDown {
@@ -134,79 +270,105 @@
 
 .hint-box p {
   margin: 0;
-  font-size: 1.1em;
+  font-size: 1.2em;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .stage-complete {
-  background: rgba(0, 255, 0, 0.2);
-  padding: 30px;
-  border-radius: 15px;
+  background: linear-gradient(135deg, rgba(0, 255, 0, 0.3) 0%, rgba(0, 200, 0, 0.2) 100%);
+  padding: 40px;
+  border-radius: 20px;
   text-align: center;
-  border: 3px solid #00ff00;
-  animation: pulse 0.5s ease;
+  border: 4px solid #00ff00;
+  animation: celebration 0.6s ease;
+  box-shadow: 0 8px 32px rgba(0, 255, 0, 0.4);
 }
 
-@keyframes pulse {
+@keyframes celebration {
   0%, 100% {
     transform: scale(1);
   }
-  50% {
-    transform: scale(1.05);
+  25% {
+    transform: scale(1.05) rotate(-2deg);
+  }
+  75% {
+    transform: scale(1.05) rotate(2deg);
   }
 }
 
 .stage-complete h3 {
   margin-top: 0;
-  font-size: 2em;
+  font-size: 2.5em;
   color: #00ff00;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 
+    2px 2px 0 #000,
+    -1px -1px 0 #000,
+    0 0 20px rgba(0, 255, 0, 0.8);
+  font-family: 'Arial Black', Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .next-stage-button {
-  background: #00ff00;
-  color: #1e3c72;
-  border: none;
-  padding: 15px 40px;
-  font-size: 1.2em;
-  border-radius: 10px;
+  background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+  color: #000;
+  border: 3px solid #fff;
+  padding: 18px 50px;
+  font-size: 1.3em;
+  border-radius: 50px;
   cursor: pointer;
   font-weight: bold;
   margin-top: 20px;
   transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 15px rgba(0, 255, 0, 0.4);
+  font-family: 'Arial Black', Arial, sans-serif;
 }
 
 .next-stage-button:hover {
-  background: #00cc00;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
+  background: linear-gradient(135deg, #00cc00 0%, #00ff00 100%);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 255, 0, 0.6);
 }
 
 .room-complete {
-  margin-top: 20px;
+  margin-top: 25px;
 }
 
 .room-complete h2 {
   color: #ffd700;
-  font-size: 2.5em;
-  margin-bottom: 20px;
+  font-size: 3em;
+  margin-bottom: 25px;
+  text-shadow: 
+    2px 2px 0 #000,
+    -1px -1px 0 #000,
+    0 0 20px rgba(255, 215, 0, 0.8);
+  font-family: 'Arial Black', Arial, sans-serif;
+  text-transform: uppercase;
 }
 
 .room-complete button {
-  background: #ffd700;
-  color: #1e3c72;
-  border: none;
-  padding: 15px 40px;
-  font-size: 1.2em;
-  border-radius: 10px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #000;
+  border: 3px solid #fff;
+  padding: 18px 50px;
+  font-size: 1.3em;
+  border-radius: 50px;
   cursor: pointer;
   font-weight: bold;
   transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+  font-family: 'Arial Black', Arial, sans-serif;
 }
 
 .room-complete button:hover {
-  background: #ffed4e;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+  background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
 }
 
 .progress-bar {
@@ -214,15 +376,37 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.2);
+  height: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+  border-top: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #00ff00, #ffd700);
+  background: linear-gradient(90deg, #00ff00 0%, #ffd700 50%, #ff6b6b 100%);
   transition: width 0.5s ease;
-  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '⚽';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-50%);
+  }
+  50% {
+    transform: translateY(-70%);
+  }
 }
 
 .loading, .error {
@@ -231,10 +415,11 @@
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  background: linear-gradient(135deg, #1a5f1a 0%, #0d4d0d 100%);
 }
 
 .loading-spinner {
-  font-size: 2em;
+  font-size: 3em;
   animation: spin 1s linear infinite;
 }
 
@@ -250,19 +435,56 @@
 .error h2 {
   color: #ff6b6b;
   margin-bottom: 20px;
+  font-family: 'Arial Black', Arial, sans-serif;
+  text-transform: uppercase;
 }
 
 .error button {
-  background: #ff6b6b;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff3b3b 100%);
   color: white;
-  border: none;
+  border: 3px solid #fff;
   padding: 15px 30px;
   font-size: 1.1em;
-  border-radius: 10px;
+  border-radius: 50px;
   cursor: pointer;
   font-weight: bold;
+  font-family: 'Arial Black', Arial, sans-serif;
+  text-transform: uppercase;
 }
 
 .error button:hover {
-  background: #ff5252;
+  background: linear-gradient(135deg, #ff3b3b 0%, #ff6b6b 100%);
+  transform: scale(1.05);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .room-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+    padding: 20px;
+  }
+
+  .room-header h1 {
+    font-size: 2em;
+  }
+
+  .room-stats {
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+
+  .back-to-menu-button {
+    padding: 12px 20px;
+    font-size: 1em;
+  }
+
+  .story-section h2 {
+    font-size: 1.8em;
+  }
+
+  .stat-value {
+    font-size: 1.5em;
+  }
 }

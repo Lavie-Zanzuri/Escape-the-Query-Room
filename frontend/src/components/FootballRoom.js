@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SQLEditor from './SQLEditor';
 import './FootballRoom.css';
 
-const FootballRoom = () => {
+const FootballRoom = ({ onBack }) => {
   const [currentStage, setCurrentStage] = useState(1);
   const [roomData, setRoomData] = useState(null);
   const [stageData, setStageData] = useState(null);

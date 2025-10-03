@@ -1,65 +1,81 @@
 import React, { useState } from 'react';
-import SQLQuestCyber from './App'; // הקובץ הקיים שלך
+import MainMenu from './MainMenu';
 import FootballRoom from './components/FootballRoom';
-import styled from 'styled-components';
-
-const NavigationButton = styled.button`
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: transparent;
-  border: 2px solid #00ff41;
-  padding: 12px 25px;
-  color: #00ff41;
-  font-family: 'Courier New', monospace;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  z-index: 9999;
-  
-  &:hover {
-    background: #00ff41;
-    color: #000;
-    box-shadow: 0 0 20px #00ff41;
-  }
-`;
-
-const BackButton = styled(NavigationButton)`
-  border-color: #ff6b6b;
-  color: #ff6b6b;
-  left: 20px;
-  right: auto;
-  
-  &:hover {
-    background: #ff6b6b;
-    color: #000;
-    box-shadow: 0 0 20px #ff6b6b;
-  }
-`;
+import SQLQuestCyber from './App'; // הדף ה-Cyberpunk המקורי שלך
 
 function RouterWrapper() {
-  const [currentPage, setCurrentPage] = useState('cyber'); // 'cyber' או 'football'
+  const [currentPage, setCurrentPage] = useState('menu'); // 'menu', 'football', 'cyber'
 
-  return (
-    <>
-      {currentPage === 'cyber' ? (
-        <>
-          <NavigationButton onClick={() => setCurrentPage('football')}>
-            ⚽ FOOTBALL ROOM
-          </NavigationButton>
-          <SQLQuestCyber />
-        </>
-      ) : (
-        <>
-          <BackButton onClick={() => setCurrentPage('cyber')}>
-            ← BACK TO TERMINAL
-          </BackButton>
-          <FootballRoom />
-        </>
-      )}
-    </>
-  );
+  const handleSelectRoom = (roomId) => {
+    console.log('Selected room:', roomId);
+    if (roomId === 'football') {
+      setCurrentPage('football');
+    } else if (roomId === 'cyber') {
+      setCurrentPage('cyber');
+    }
+  };
+
+  const handleBack = () => {
+    console.log('Going back to menu');
+    setCurrentPage('menu');
+  };
+
+  // רנדור לפי העמוד הנוכחי
+  if (currentPage === 'menu') {
+    return <MainMenu onSelectRoom={handleSelectRoom} />;
+  }
+
+  if (currentPage === 'football') {
+    return (
+      <>
+        {/* Fixed Back Button */}
+        <button
+          onClick={handleBack}
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '20px',
+            zIndex: 99999,
+            background: 'linear-gradient(135deg, #ff3b3b 0%, #ff6b6b 100%)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            border: '3px solid #fff',
+            color: 'white',
+            padding: '15px 30px',
+            fontSize: '1.1em',
+            borderRadius: '50px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontFamily: "'Arial Black', Arial, sans-serif",
+            boxShadow: '0 4px 15px rgba(255, 59, 59, 0.4)',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ff3b3b 100%)';
+            e.target.style.transform = 'translateX(-5px) scale(1.05)';
+            e.target.style.boxShadow = '0 6px 20px rgba(255, 59, 59, 0.6)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'linear-gradient(135deg, #ff3b3b 0%, #ff6b6b 100%)';
+            e.target.style.transform = 'none';
+            e.target.style.boxShadow = '0 4px 15px rgba(255, 59, 59, 0.4)';
+          }}
+        >
+          ← BACK TO MENU
+        </button>
+        <FootballRoom onBack={handleBack} />
+      </>
+    );
+  }
+
+  if (currentPage === 'cyber') {
+    return <SQLQuestCyber />;
+  }
+
+  // Fallback למקרה של state לא צפוי
+  return <MainMenu onSelectRoom={handleSelectRoom} />;
 }
 
 export default RouterWrapper;

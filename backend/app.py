@@ -48,76 +48,92 @@ ROOM_DATA = {
         'stages': [
             {
                 'id': 1,
-                'title': 'Access Database',
+                'title': 'Database Access',
                 'description': 'Gain access to the UEFA player database. Find all players in the system.',
                 'story': 'You\'ve breached the outer firewall! The UEFA database is open. Start by exploring what data is available.',
-                'target_query': 'SELECT * FROM players LIMIT 5',
-                'expected_result_type': 'basic_select',
+                'target_query': 'SELECT * FROM players',
+                'expected_columns': ['player_id', 'name', 'team_id', 'position', 'age', 'salary', 'goals_scored'],
                 'hints': [
-                    'Start with a simple SELECT statement',
-                    'Look at the players table',
-                    'Use SELECT * to see all columns'
+                    'Start with SELECT * to see all columns',
+                    'Use FROM players to query the players table',
+                    'The basic syntax is: SELECT * FROM table_name'
                 ]
             },
             {
                 'id': 2,
-                'title': 'Identify Targets',
-                'description': 'Find all forwards (position = \'Forward\') who scored more than 20 goals.',
+                'title': 'Identify Top Scorers',
+                'description': 'Find all forwards who scored more than 20 goals.',
                 'story': 'Good work! Now we need to identify the star players. Find the top goal scorers among forwards.',
                 'target_query': 'SELECT name, position, goals_scored FROM players WHERE position = \'Forward\' AND goals_scored > 20',
-                'expected_result_type': 'filtered_select',
+                'expected_columns': ['name', 'position', 'goals_scored'],
+                'validation': {
+                    'min_rows': 5,
+                    'required_position': 'Forward',
+                    'min_goals': 20
+                },
                 'hints': [
-                    'Use WHERE clause with multiple conditions',
-                    'Combine conditions with AND',
-                    'Look for position = \'Forward\' and goals_scored > 20'
+                    'Use WHERE clause to filter results',
+                    'Combine multiple conditions with AND',
+                    'Filter by position = \'Forward\' AND goals_scored > 20',
+                    'Select specific columns: name, position, goals_scored'
                 ]
             },
             {
                 'id': 3,
-                'title': 'Team Salaries',
+                'title': 'Team Salary Analysis',
                 'description': 'Calculate average salary for each team. Show team name and average salary.',
                 'story': 'Excellent! Now we need to understand the money flow. Which teams are spending the most on player salaries?',
                 'target_query': 'SELECT t.team_name, AVG(p.salary) as avg_salary FROM teams t JOIN players p ON t.team_id = p.team_id GROUP BY t.team_id, t.team_name ORDER BY avg_salary DESC',
-                'expected_result_type': 'aggregation',
+                'expected_columns': ['team_name', 'avg_salary'],
+                'validation': {
+                    'requires_join': True,
+                    'requires_aggregate': 'AVG',
+                    'requires_group_by': True
+                },
                 'hints': [
                     'You need to JOIN teams and players tables',
-                    'Use GROUP BY team to calculate averages',
-                    'Use AVG() function for average salary'
+                    'Use ON clause to match team_id in both tables',
+                    'Use GROUP BY team_name to group by team',
+                    'Use AVG(salary) to calculate average salary',
+                    'Use ORDER BY avg_salary DESC to see highest first'
                 ]
             },
             {
                 'id': 4,
-                'title': 'Match Analysis',
-                'description': 'Find matches where the home team lost despite having a higher average salary than the away team.',
-                'story': 'Strange patterns emerging... Find matches where the expensive home team lost to a cheaper away team.',
-                'target_query': '''SELECT m.match_id, ht.team_name as home_team, at.team_name as away_team, 
-                                  m.home_score, m.away_score, m.match_date
-                                  FROM matches m 
-                                  JOIN teams ht ON m.home_team_id = ht.team_id 
-                                  JOIN teams at ON m.away_team_id = at.team_id 
-                                  WHERE m.home_score < m.away_score''',
-                'expected_result_type': 'complex_join',
+                'title': 'Upset Matches',
+                'description': 'Find matches where the home team lost (scored fewer goals than away team).',
+                'story': 'Strange patterns emerging... Find matches where the home team lost to the away team.',
+                'target_query': 'SELECT m.match_id, ht.team_name as home_team, at.team_name as away_team, m.home_score, m.away_score, m.match_date FROM matches m JOIN teams ht ON m.home_team_id = ht.team_id JOIN teams at ON m.away_team_id = at.team_id WHERE m.home_score < m.away_score',
+                'expected_columns': ['match_id', 'home_team', 'away_team', 'home_score', 'away_score', 'match_date'],
+                'validation': {
+                    'requires_multiple_joins': True,
+                    'home_score_less_than_away': True
+                },
                 'hints': [
-                    'Join matches table with teams table twice (home and away)',
-                    'Use aliases like ht for home_team and at for away_team',
-                    'Filter where home_score < away_score'
+                    'Join matches table with teams table TWICE',
+                    'Use aliases: ht for home_team, at for away_team',
+                    'First join: ON m.home_team_id = ht.team_id',
+                    'Second join: ON m.away_team_id = at.team_id',
+                    'Filter WHERE m.home_score < m.away_score'
                 ]
             },
             {
                 'id': 5,
-                'title': 'Corruption Evidence',
-                'description': 'Find players whose salary is more than 3 times their team\'s average salary.',
+                'title': 'Salary Outliers',
+                'description': 'Find players whose salary is more than 2x their team\'s average salary.',
                 'story': 'Final evidence needed! Find players with suspiciously high salaries compared to their teammates.',
-                'target_query': '''SELECT p.name, p.salary, t.team_name,
-                                  (SELECT AVG(salary) FROM players WHERE team_id = p.team_id) as team_avg_salary
-                                  FROM players p 
-                                  JOIN teams t ON p.team_id = t.team_id 
-                                  WHERE p.salary > 3 * (SELECT AVG(salary) FROM players WHERE team_id = p.team_id)''',
-                'expected_result_type': 'subquery',
+                'target_query': 'SELECT p.name, p.salary, t.team_name, (SELECT AVG(salary) FROM players WHERE team_id = p.team_id) as team_avg_salary FROM players p JOIN teams t ON p.team_id = t.team_id WHERE p.salary > 2 * (SELECT AVG(salary) FROM players WHERE team_id = p.team_id)',
+                'expected_columns': ['name', 'salary', 'team_name', 'team_avg_salary'],
+                'validation': {
+                    'requires_subquery': True,
+                    'salary_comparison': True
+                },
                 'hints': [
-                    'Use subquery to calculate team average salary',
-                    'Compare player salary to team average',
-                    'Use WHERE with subquery comparison'
+                    'Use a subquery to calculate team average: (SELECT AVG(salary) FROM players WHERE team_id = p.team_id)',
+                    'Compare player salary to this subquery',
+                    'Use WHERE p.salary > 2 * (subquery)',
+                    'Join with teams to get team_name',
+                    'This finds outliers earning way more than teammates'
                 ]
             }
         ]
@@ -129,7 +145,7 @@ ROOM_DATA = {
 def test_connection():
     """Test endpoint to verify backend is running"""
     return jsonify({
-        'message': 'SQL Quest Backend is running perfectly! 🚀',
+        'message': 'SQL Quest Backend is running perfectly!',
         'status': 'success',
         'version': '1.0.0',
         'timestamp': datetime.utcnow().isoformat()
@@ -337,7 +353,7 @@ def create_sample_database():
     # Create database directory if it doesn't exist
     if not os.path.exists('database'):
         os.makedirs('database')
-        print("📁 Created database directory")
+        print("Created database directory")
     
     # Only create if doesn't exist
     if not os.path.exists(sample_db_path):
@@ -355,7 +371,7 @@ def create_sample_database():
             )
         ''')
         
-        # Insert sample data - make it more interesting!
+        # Insert sample data
         sample_students = [
             (1, 'Alice Johnson', 'Computer Science', 3.8, '2022-09-01'),
             (2, 'Bob Smith', 'Mathematics', 3.5, '2022-09-01'),
@@ -374,7 +390,7 @@ def create_sample_database():
             sample_students
         )
         
-        # Create courses table for more interesting queries
+        # Create courses table
         cursor.execute('''
             CREATE TABLE courses (
                 course_id INTEGER PRIMARY KEY,
@@ -398,7 +414,7 @@ def create_sample_database():
             sample_courses
         )
         
-        # Create enrollments table for JOIN queries
+        # Create enrollments table
         cursor.execute('''
             CREATE TABLE enrollments (
                 enrollment_id INTEGER PRIMARY KEY,
@@ -428,11 +444,11 @@ def create_sample_database():
         
         conn.commit()
         conn.close()
-        print("✅ Sample database created with students, courses, and enrollments!")
-        print("📊 Available tables: students, courses, enrollments")
+        print("Sample database created successfully!")
+        print("Available tables: students, courses, enrollments")
         return True
     else:
-        print("📊 Sample database already exists")
+        print("Sample database already exists")
         return False
 
 def create_football_database():
@@ -441,7 +457,7 @@ def create_football_database():
     
     if not os.path.exists('database'):
         os.makedirs('database')
-        print("📁 Created database directory")
+        print("Created database directory")
     
     if not os.path.exists(football_db_path):
         conn = sqlite3.connect(football_db_path)
@@ -539,11 +555,11 @@ def create_football_database():
         
         conn.commit()
         conn.close()
-        print("✅ Football database created successfully!")
-        print("📊 Available tables: teams, players, matches")
+        print("Football database created successfully!")
+        print("Available tables: teams, players, matches")
         return True
     else:
-        print("📊 Football database already exists")
+        print("Football database already exists")
         return False
 
 def initialize_app():
@@ -551,7 +567,7 @@ def initialize_app():
     with app.app_context():
         # Create main database tables
         db.create_all()
-        print("✅ Main database tables created!")
+        print("Main database tables created!")
         
         # Create sample database (existing)
         create_sample_database()
@@ -560,14 +576,14 @@ def initialize_app():
         create_football_database()
 
 if __name__ == '__main__':
-    print("🚀 Starting SQL Quest Backend...")
+    print("Starting SQL Quest Backend...")
     print("=" * 50)
     initialize_app()
     print("=" * 50)
-    print("🌐 Server running on http://localhost:5000")
-    print("🎯 Frontend should connect from http://localhost:3000")
-    print("📊 Test endpoint: http://localhost:5000/api/test")
-    print("🔥 Ready to receive SQL queries!")
+    print("Server running on http://localhost:5000")
+    print("Frontend should connect from http://localhost:3000")
+    print("Test endpoint: http://localhost:5000/api/test")
+    print("Ready to receive SQL queries!")
     print("=" * 50)
     
     app.run(debug=True, port=5000, host='0.0.0.0')
