@@ -12,6 +12,7 @@ const FootballRoom = ({ onBack }) => {
   const [stageComplete, setStageComplete] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
   const [crowdSound, setCrowdSound] = useState(false);
+  const [validationError, setValidationError] = useState(null);
 
   useEffect(() => {
     loadRoomData();
@@ -43,16 +44,43 @@ const FootballRoom = ({ onBack }) => {
       setStageComplete(false);
       setShowHint(false);
       setCurrentHintIndex(0);
+      setValidationError(null);
     } catch (error) {
       console.error('Error loading stage data:', error);
     }
   };
 
-  const handleQuerySuccess = (result) => {
+  const handleQuerySuccess = async (result) => {
     if (result.success && result.row_count > 0 && !stageComplete) {
-      setStageComplete(true);
-      const stageScore = 100 - (currentHintIndex * 20);
-      setTotalScore((prev) => prev + stageScore);
+      try {
+        // Send results to backend for validation
+        const response = await fetch(`http://localhost:5000/api/validate-query/football/${currentStage}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            results: result.data,
+            row_count: result.row_count 
+          })
+        });
+        
+        const validation = await response.json();
+        
+        if (validation.valid) {
+          // Correct answer!
+          setStageComplete(true);
+          setValidationError(null);
+          const stageScore = 100 - (currentHintIndex * 20);
+          setTotalScore((prev) => prev + stageScore);
+        } else {
+          // Incorrect answer
+          setValidationError(validation.message || 'The query result is not correct. Try again!');
+        }
+      } catch (error) {
+        console.error('Validation error:', error);
+        setValidationError('Error validating your query. Please try again.');
+      }
+    } else if (result.success && result.row_count === 0) {
+      setValidationError('Your query returned no results. Make sure your query is correct.');
     }
   };
 
@@ -152,6 +180,13 @@ const FootballRoom = ({ onBack }) => {
             roomId="football"
             onQuerySuccess={handleQuerySuccess}
           />
+          
+          {validationError && (
+            <div className="validation-error">
+              <strong>❌ Not quite right!</strong>
+              <p>{validationError}</p>
+            </div>
+          )}
         </div>
 
         {stageComplete && (

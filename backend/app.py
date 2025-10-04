@@ -363,13 +363,222 @@ def create_user():
             'error': f'Database error: {str(e)}'
         }), 500
 
+# ========================================
+# VALIDATION SYSTEM
+# ========================================
+
+def validate_football_stage(stage, results, row_count):
+    """
+    Validate if the query results match the expected output for each stage
+    """
+    
+    # Stage 1: Get all players
+    if stage == 1:
+        if row_count < 10:
+            return {
+                'valid': False,
+                'message': 'Not enough players found. Make sure to SELECT all players from the database.'
+            }
+        
+        # Check if basic columns exist
+        if results and len(results) > 0:
+            required_columns = ['name', 'position', 'salary']
+            first_row = results[0]
+            missing_columns = [col for col in required_columns if col not in first_row]
+            
+            if missing_columns:
+                return {
+                    'valid': False,
+                    'message': f'Your query is missing important columns. Try using SELECT * to get all columns.'
+                }
+        
+        return {
+            'valid': True,
+            'message': 'Perfect! You accessed all players in the database.'
+        }
+    
+    # Stage 2: Forwards with more than 20 goals
+    elif stage == 2:
+        if row_count == 0:
+            return {
+                'valid': False,
+                'message': 'No results found. Remember to filter for Forwards with more than 20 goals.'
+            }
+        
+        # Validate each row has correct position and goals
+        for row in results:
+            position = row.get('position', '')
+            goals = row.get('goals_scored', 0)
+            
+            if position != 'Forward':
+                return {
+                    'valid': False,
+                    'message': 'Your results include players who are not Forwards. Filter by position = \'Forward\'.'
+                }
+            
+            if goals <= 20:
+                return {
+                    'valid': False,
+                    'message': f'Some players have 20 goals or less. You need players with MORE than 20 goals (goals_scored > 20).'
+                }
+        
+        if row_count < 3:
+            return {
+                'valid': False,
+                'message': 'You found some players, but there should be more forwards with over 20 goals. Check your query again.'
+            }
+        
+        return {
+            'valid': True,
+            'message': 'Excellent! You found all the top-scoring forwards.'
+        }
+    
+    # Stage 3: Average salary by team (requires JOIN and GROUP BY)
+    elif stage == 3:
+        if row_count == 0:
+            return {
+                'valid': False,
+                'message': 'No results found. You need to JOIN teams and players tables, then GROUP BY team.'
+            }
+        
+        # Check if we have team names (means JOIN worked)
+        if results and len(results) > 0:
+            first_row = results[0]
+            
+            # Check for team_name column (from JOIN)
+            if 'team_name' not in first_row:
+                return {
+                    'valid': False,
+                    'message': 'Missing team names. You need to JOIN the teams table to get team_name.'
+                }
+            
+            # Check for average salary calculation
+            avg_col = None
+            for key in first_row.keys():
+                if 'avg' in key.lower() or 'salary' in key.lower():
+                    avg_col = key
+                    break
+            
+            if not avg_col:
+                return {
+                    'valid': False,
+                    'message': 'Missing average salary calculation. Use AVG(salary) in your SELECT.'
+                }
+            
+            # Check if we have multiple teams (GROUP BY worked)
+            if row_count < 5:
+                return {
+                    'valid': False,
+                    'message': 'Not enough teams found. Make sure you\'re using GROUP BY to group by each team.'
+                }
+        
+        return {
+            'valid': True,
+            'message': 'Perfect! You calculated average salaries for each team.'
+        }
+    
+    # Stage 4: Matches where home team lost
+    elif stage == 4:
+        if row_count == 0:
+            return {
+                'valid': False,
+                'message': 'No matches found. Look for matches where home_score < away_score.'
+            }
+        
+        # Validate that home team actually lost in each match
+        for row in results:
+            home_score = row.get('home_score', 0)
+            away_score = row.get('away_score', 0)
+            
+            if home_score >= away_score:
+                return {
+                    'valid': False,
+                    'message': 'Some matches don\'t show home team losses. Filter where home_score < away_score.'
+                }
+            
+            # Check if we have team names (means JOIN worked)
+            if 'home_team' not in row and 'team_name' not in row:
+                return {
+                    'valid': False,
+                    'message': 'Missing team names. You need to JOIN with the teams table twice to get both home and away team names.'
+                }
+        
+        return {
+            'valid': True,
+            'message': 'Great! You found all matches where the home team lost.'
+        }
+    
+    # Stage 5: Players with salary > 2x team average (requires subquery)
+    elif stage == 5:
+        if row_count == 0:
+            return {
+                'valid': False,
+                'message': 'No salary outliers found. Look for players whose salary is more than 2x their team\'s average.'
+            }
+        
+        # Check if results include necessary data
+        if results and len(results) > 0:
+            first_row = results[0]
+            
+            if 'salary' not in first_row:
+                return {
+                    'valid': False,
+                    'message': 'Missing salary information. Make sure to include player salary in your SELECT.'
+                }
+            
+            # Ideally check if salary is actually > 2x average
+            # This is a simplified check - in production you'd verify the actual calculation
+            if row_count < 2:
+                return {
+                    'valid': False,
+                    'message': 'There should be more players with unusually high salaries. Use a subquery to calculate the team average and compare.'
+                }
+        
+        return {
+            'valid': True,
+            'message': 'Outstanding! You found all the salary outliers using a subquery.'
+        }
+    
+    # Unknown stage
+    return {
+        'valid': False,
+        'message': 'Unknown stage number.'
+    }
+
+
+@app.route('/api/validate-query/<room_id>/<int:stage>', methods=['POST'])
+def validate_query(room_id, stage):
+    """
+    Validate query results against expected output for the stage
+    """
+    try:
+        data = request.json
+        results = data.get('results', [])
+        row_count = data.get('row_count', len(results))
+        
+        if room_id == 'football':
+            validation = validate_football_stage(stage, results, row_count)
+            return jsonify(validation)
+        
+        return jsonify({
+            'valid': False,
+            'message': f'Validation not implemented for room: {room_id}'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'valid': False,
+            'message': f'Validation error: {str(e)}'
+        }), 500
+
+
 def create_sample_database():
     """Create sample database with student data"""
     sample_db_path = 'database/sample.db'
     
     if not os.path.exists('database'):
         os.makedirs('database')
-        print("Created database directory")
+        print("✅ Created database directory")
     
     if not os.path.exists(sample_db_path):
         conn = sqlite3.connect(sample_db_path)
@@ -455,10 +664,10 @@ def create_sample_database():
         
         conn.commit()
         conn.close()
-        print("Sample database created successfully!")
+        print("✅ Sample database created successfully!")
         return True
     else:
-        print("Sample database already exists")
+        print("📊 Sample database already exists")
         return False
 
 def create_football_database():
@@ -558,27 +767,29 @@ def create_football_database():
         
         conn.commit()
         conn.close()
-        print("Football database created successfully!")
+        print("✅ Football database created successfully!")
         return True
     else:
-        print("Football database already exists")
+        print("📊 Football database already exists")
         return False
 
 def initialize_app():
     """Initialize database and sample data"""
     with app.app_context():
         db.create_all()
-        print("Main database tables created!")
+        print("✅ Main database tables created!")
         create_sample_database()
         create_football_database()
 
 if __name__ == '__main__':
-    print("Starting SQL Quest Backend...")
+    print("🚀 Starting SQL Quest Backend...")
     print("=" * 50)
     initialize_app()
     print("=" * 50)
-    print("Server running on http://localhost:5000")
-    print("Frontend should connect from http://localhost:3000")
+    print("🌐 Server running on http://localhost:5000")
+    print("🎯 Frontend should connect from http://localhost:3000")
+    print("📊 Test endpoint: http://localhost:5000/api/test")
+    print("🔥 Ready to receive SQL queries!")
     print("=" * 50)
     
     app.run(debug=True, port=5000, host='0.0.0.0')
