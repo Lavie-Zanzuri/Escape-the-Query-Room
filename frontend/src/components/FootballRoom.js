@@ -11,6 +11,7 @@ const FootballRoom = ({ onBack }) => {
   const [currentHintIndex, setCurrentHintIndex] = useState(0);
   const [stageComplete, setStageComplete] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
+  const [crowdSound, setCrowdSound] = useState(false);
 
   useEffect(() => {
     loadRoomData();
@@ -48,10 +49,10 @@ const FootballRoom = ({ onBack }) => {
   };
 
   const handleQuerySuccess = (result) => {
-    if (result.success && result.row_count > 0) {
+    if (result.success && result.row_count > 0 && !stageComplete) {
       setStageComplete(true);
       const stageScore = 100 - (currentHintIndex * 20);
-      setTotalScore(totalScore + stageScore);
+      setTotalScore((prev) => prev + stageScore);
     }
   };
 
@@ -91,15 +92,29 @@ const FootballRoom = ({ onBack }) => {
     <div className="football-room">
       <div className="room-header">
         <h1>⚽ {roomData.name}</h1>
-        <div className="room-stats">
-          <div className="stat">
-            <span className="stat-label">Stage:</span>
-            <span className="stat-value">{currentStage}/{roomData.stages.length}</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">Score:</span>
-            <span className="stat-value">{totalScore}</span>
-          </div>
+        <button
+          type="button"
+          className={`sound-toggle${crowdSound ? ' active' : ''}`}
+          onClick={() => setCrowdSound(!crowdSound)}
+          aria-pressed={crowdSound}
+        >
+          {crowdSound ? '🔊 Crowd On' : '🔇 Crowd Off'}
+        </button>
+      </div>
+
+      <div className="scoreboard">
+        <div className="score-field">
+          <span>Stage</span>
+          <strong>{currentStage}</strong>
+          <small>of {roomData.stages.length}</small>
+        </div>
+        <div className="score-field">
+          <span>Score</span>
+          <strong>{totalScore}</strong>
+        </div>
+        <div className="score-field">
+          <span>Hints Used</span>
+          <strong>{showHint ? currentHintIndex + 1 : 0}</strong>
         </div>
       </div>
 
@@ -115,6 +130,21 @@ const FootballRoom = ({ onBack }) => {
               <pre>{stageData.database_info}</pre>
             </div>
           )}
+
+          <div className="hints-section">
+            <button 
+              className="hint-button cta-button"
+              onClick={showNextHint}
+              disabled={showHint && currentHintIndex >= stageData.hints.length - 1}
+            >
+              💡 Show Hint ({Math.min(currentHintIndex + 1, stageData.hints.length)}/{stageData.hints.length})
+            </button>
+            {showHint && (
+              <div className="hint-box">
+                <p>{stageData.hints[currentHintIndex]}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="editor-section">
@@ -124,35 +154,19 @@ const FootballRoom = ({ onBack }) => {
           />
         </div>
 
-        <div className="hints-section">
-          <button 
-            className="hint-button"
-            onClick={showNextHint}
-            disabled={showHint && currentHintIndex >= stageData.hints.length - 1}
-          >
-            💡 Show Hint ({currentHintIndex + 1}/{stageData.hints.length})
-          </button>
-          
-          {showHint && (
-            <div className="hint-box">
-              <p>{stageData.hints[currentHintIndex]}</p>
-            </div>
-          )}
-        </div>
-
         {stageComplete && (
           <div className="stage-complete">
             <h3>🎉 Stage Complete!</h3>
             <p>You earned {100 - (currentHintIndex * 20)} points!</p>
             {currentStage < roomData.stages.length ? (
-              <button className="next-stage-button" onClick={nextStage}>
+              <button className="next-stage-button cta-button" onClick={nextStage}>
                 Continue to Next Stage →
               </button>
             ) : (
               <div className="room-complete">
                 <h2>🏆 Room Complete!</h2>
                 <p>Total Score: {totalScore + (100 - currentHintIndex * 20)}</p>
-                <button onClick={() => window.location.reload()}>
+                <button className="cta-button" onClick={() => window.location.reload()}>
                   Play Again
                 </button>
               </div>
@@ -160,6 +174,13 @@ const FootballRoom = ({ onBack }) => {
           </div>
         )}
       </div>
+
+      {crowdSound && (
+        <audio className="crowd-audio" autoPlay loop>
+          <source src="/audio/stadium-ambience.mp3" type="audio/mpeg" />
+          Your browser does not support the audio element.
+        </audio>
+      )}
 
       <div className="progress-bar">
         <div 
