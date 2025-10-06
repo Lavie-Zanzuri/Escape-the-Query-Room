@@ -86,7 +86,7 @@ const FootballRoom = ({ onBack }) => {
         const validation = await response.json();
         
         if (validation.valid) {
-          // ⏱️ Calculate final time at the moment of completion
+          // ⏱️ Stop timer and calculate score
           const finalTime = stageElapsedTime;
           
           // Calculate stage score based on time and hints
@@ -94,17 +94,16 @@ const FootballRoom = ({ onBack }) => {
           const hintPenalty = currentHintIndex * 20;
           const stageScore = Math.max(0, timeBonus - hintPenalty);
           
-          // ✅ Mark stage as complete FIRST
-          setStageComplete(true);
-          setValidationError(null);
-          setTotalScore((prev) => prev + stageScore);
-          
-          // ✅ THEN save stage completion data (after stageComplete is true)
+          // Save stage completion data
           setStageTimes(prev => [...prev, {
             stage: currentStage,
             time: finalTime,
             score: stageScore
           }]);
+          
+          setStageComplete(true);
+          setValidationError(null);
+          setTotalScore((prev) => prev + stageScore);
         } else {
           // Incorrect answer
           setValidationError(validation.message || 'The query result is not correct. Try again!');
@@ -320,7 +319,7 @@ const FootballRoom = ({ onBack }) => {
 
       {crowdSound && (
         <audio className="crowd-audio" autoPlay loop>
-          <source src="/audio/stadium-ambience.mp3" type="audio/mpeg" />
+          <source src="/audio/converted_audio.mp3" type="audio/mpeg" />
           Your browser does not support the audio element.
         </audio>
       )}
