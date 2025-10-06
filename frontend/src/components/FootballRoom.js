@@ -13,6 +13,11 @@ const FootballRoom = ({ onBack }) => {
   const [totalScore, setTotalScore] = useState(0);
   const [crowdSound, setCrowdSound] = useState(false);
   const [validationError, setValidationError] = useState(null);
+  
+  // ⏱️ Timer states
+  const [stageStartTime, setStageStartTime] = useState(null);
+  const [stageElapsedTime, setStageElapsedTime] = useState(0);
+  const [stageTimes, setStageTimes] = useState([]);
 
   useEffect(() => {
     loadRoomData();
@@ -23,6 +28,17 @@ const FootballRoom = ({ onBack }) => {
       loadStageData();
     }
   }, [currentStage, roomData]);
+
+  // ⏱️ Timer effect - runs every second
+  useEffect(() => {
+    let interval;
+    if (stageStartTime && !stageComplete) {
+      interval = setInterval(() => {
+        setStageElapsedTime(Math.floor((Date.now() - stageStartTime) / 1000));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [stageStartTime, stageComplete]);
 
   const loadRoomData = async () => {
     try {
@@ -45,6 +61,10 @@ const FootballRoom = ({ onBack }) => {
       setShowHint(false);
       setCurrentHintIndex(0);
       setValidationError(null);
+      
+      // ⏱️ Start timer for this stage
+      setStageStartTime(Date.now());
+      setStageElapsedTime(0);
     } catch (error) {
       console.error('Error loading stage data:', error);
     }
@@ -66,11 +86,25 @@ const FootballRoom = ({ onBack }) => {
         const validation = await response.json();
         
         if (validation.valid) {
-          // Correct answer!
+          // ⏱️ Calculate final time at the moment of completion
+          const finalTime = stageElapsedTime;
+          
+          // Calculate stage score based on time and hints
+          const timeBonus = calculateTimeBonus(finalTime);
+          const hintPenalty = currentHintIndex * 20;
+          const stageScore = Math.max(0, timeBonus - hintPenalty);
+          
+          // ✅ Mark stage as complete FIRST
           setStageComplete(true);
           setValidationError(null);
-          const stageScore = 100 - (currentHintIndex * 20);
           setTotalScore((prev) => prev + stageScore);
+          
+          // ✅ THEN save stage completion data (after stageComplete is true)
+          setStageTimes(prev => [...prev, {
+            stage: currentStage,
+            time: finalTime,
+            score: stageScore
+          }]);
         } else {
           // Incorrect answer
           setValidationError(validation.message || 'The query result is not correct. Try again!');
@@ -82,6 +116,23 @@ const FootballRoom = ({ onBack }) => {
     } else if (result.success && result.row_count === 0) {
       setValidationError('Your query returned no results. Make sure your query is correct.');
     }
+  };
+
+  // ⏱️ Calculate time bonus (100 points max, decreases over time)
+  const calculateTimeBonus = (seconds) => {
+    // Perfect time: 30 seconds = 100 points
+    // After 30 seconds: lose 1 point per 2 seconds
+    // Minimum: 20 points
+    if (seconds <= 30) return 100;
+    const penalty = Math.floor((seconds - 30) / 2);
+    return Math.max(20, 100 - penalty);
+  };
+
+  // ⏱️ Format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const nextStage = () => {
@@ -136,6 +187,20 @@ const FootballRoom = ({ onBack }) => {
           <strong>{currentStage}</strong>
           <small>of {roomData.stages.length}</small>
         </div>
+        <div className="score-field timer-field">
+          <span>⏱️ Stage Time</span>
+          <strong className={stageElapsedTime > 60 ? 'time-warning' : ''}>{formatTime(stageElapsedTime)}</strong>
+          <small>Bonus: +{calculateTimeBonus(stageElapsedTime)} pts</small>
+        </div>
+        <div className="score-field timer-field">
+          <span>🏁 Total Time</span>
+          <strong>
+            {formatTime(
+              stageTimes.reduce((sum, st) => sum + st.time, 0) + 
+              (stageComplete ? 0 : stageElapsedTime)
+            )}
+          </strong>
+        </div>
         <div className="score-field">
           <span>Score</span>
           <strong>{totalScore}</strong>
@@ -153,6 +218,7 @@ const FootballRoom = ({ onBack }) => {
           <div className="objective">
             <strong>Objective:</strong> {stageData.description}
           </div>
+          
           {stageData.database_info && (
             <div className="database-info-box">
               <pre>{stageData.database_info}</pre>
@@ -192,7 +258,24 @@ const FootballRoom = ({ onBack }) => {
         {stageComplete && (
           <div className="stage-complete">
             <h3>🎉 Stage Complete!</h3>
-            <p>You earned {100 - (currentHintIndex * 20)} points!</p>
+            <div className="stage-stats">
+              <div className="stat-item">
+                <span className="stat-label">Time:</span>
+                <span className="stat-value">{formatTime(stageElapsedTime)}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Time Bonus:</span>
+                <span className="stat-value">+{calculateTimeBonus(stageElapsedTime)} pts</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Hints Used:</span>
+                <span className="stat-value">-{currentHintIndex * 20} pts</span>
+              </div>
+              <div className="stat-item total-stat">
+                <span className="stat-label">Stage Score:</span>
+                <span className="stat-value">{Math.max(0, calculateTimeBonus(stageElapsedTime) - (currentHintIndex * 20))} pts</span>
+              </div>
+            </div>
             {currentStage < roomData.stages.length ? (
               <button className="next-stage-button cta-button" onClick={nextStage}>
                 Continue to Next Stage →
@@ -200,7 +283,32 @@ const FootballRoom = ({ onBack }) => {
             ) : (
               <div className="room-complete">
                 <h2>🏆 Room Complete!</h2>
-                <p>Total Score: {totalScore + (100 - currentHintIndex * 20)}</p>
+                <div className="final-stats">
+                  <div className="final-stat">
+                    <span>Total Score:</span>
+                    <strong>{totalScore}</strong>
+                  </div>
+                  <div className="final-stat">
+                    <span>Total Time:</span>
+                    <strong>{formatTime(stageTimes.reduce((sum, st) => sum + st.time, 0))}</strong>
+                  </div>
+                  <div className="final-stat">
+                    <span>Avg Time/Stage:</span>
+                    <strong>{formatTime(Math.floor(stageTimes.reduce((sum, st) => sum + st.time, 0) / stageTimes.length))}</strong>
+                  </div>
+                </div>
+                
+                <div className="stage-breakdown">
+                  <h3>Stage Breakdown:</h3>
+                  {stageTimes.map((stageTime, index) => (
+                    <div key={index} className="breakdown-item">
+                      <span>Stage {stageTime.stage}</span>
+                      <span>{formatTime(stageTime.time)}</span>
+                      <span>{stageTime.score} pts</span>
+                    </div>
+                  ))}
+                </div>
+                
                 <button className="cta-button" onClick={() => window.location.reload()}>
                   Play Again
                 </button>
