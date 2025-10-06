@@ -17,6 +17,9 @@ const FootballRoom = ({ onBack }) => {
   const [stageElapsedTime, setStageElapsedTime] = useState(0);
   const [stageTimes, setStageTimes] = useState([]);
 
+  // Goal Sound Effect
+  const goalSound = new Audio('/audio/goooooaall.mp3');
+
   useEffect(() => {
     loadRoomData();
   }, []);
@@ -96,6 +99,11 @@ const FootballRoom = ({ onBack }) => {
           setStageComplete(true);
           setValidationError(null);
           setTotalScore((prev) => prev + stageScore);
+
+          // Play GOAL SOUND
+          goalSound.currentTime = 0;
+          goalSound.volume = 0.7;
+          goalSound.play().catch(err => console.log('Audio play failed:', err));
         } else {
           setValidationError(validation.message || 'The query result is not correct. Try again!');
         }
@@ -166,7 +174,7 @@ const FootballRoom = ({ onBack }) => {
     <div className="min-h-screen relative overflow-hidden" style={{
       background: 'linear-gradient(to bottom, #0a1f0a 0%, #0d2b0d 30%, #1a4d1a 100%)'
     }}>
-      {/* GRASS FIELD with STRIPES - דשא מציאותי */}
+      {/* GRASS FIELD with STRIPES */}
       <div className="fixed inset-0 opacity-40 pointer-events-none">
         <div style={{
           background: `repeating-linear-gradient(
@@ -179,36 +187,30 @@ const FootballRoom = ({ onBack }) => {
         }} className="w-full h-full" />
       </div>
 
-      {/* FIELD LINES - קווי מגרש */}
+      {/* FIELD LINES */}
       <div className="fixed inset-0 pointer-events-none opacity-20">
-        {/* Center Circle */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-4 border-white rounded-full" />
-        {/* Center Line */}
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-full bg-white" />
-        {/* Penalty Areas */}
         <div className="absolute top-1/2 left-20 transform -translate-y-1/2 w-32 h-48 border-4 border-white" />
         <div className="absolute top-1/2 right-20 transform -translate-y-1/2 w-32 h-48 border-4 border-white" />
       </div>
 
-      {/* STADIUM FLOODLIGHTS - זרקורים מהבהבים */}
+      {/* STADIUM FLOODLIGHTS */}
       <div className="fixed top-0 left-0 right-0 h-96 pointer-events-none z-0">
-        {/* Top Left Floodlight */}
         <div className="absolute top-0 left-1/4 w-96 h-96 opacity-30 animate-pulse" style={{
           background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, transparent 60%)',
           animationDuration: '3s'
         }} />
-        {/* Top Right Floodlight */}
         <div className="absolute top-0 right-1/4 w-96 h-96 opacity-25 animate-pulse" style={{
           background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, transparent 60%)',
           animationDuration: '4s'
         }} />
-        {/* Center Spotlight */}
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-full h-96 opacity-20" style={{
           background: 'radial-gradient(ellipse at top, rgba(255,255,255,0.4) 0%, transparent 70%)'
         }} />
       </div>
 
-      {/* FLOATING FOOTBALLS - כדורים מרחפים ברקע */}
+      {/* FLOATING FOOTBALLS */}
       <div className="fixed inset-0 pointer-events-none opacity-20">
         <div className="absolute top-20 left-10 text-4xl animate-bounce" style={{ animationDuration: '3s', animationDelay: '0s' }}>⚽</div>
         <div className="absolute top-40 right-20 text-3xl animate-bounce" style={{ animationDuration: '4s', animationDelay: '1s' }}>⚽</div>
@@ -216,7 +218,7 @@ const FootballRoom = ({ onBack }) => {
         <div className="absolute top-1/3 right-1/3 text-2xl animate-bounce" style={{ animationDuration: '3.5s', animationDelay: '0.5s' }}>⚽</div>
       </div>
 
-      {/* SPARKLE PARTICLES - פרטיקלים נוצצים */}
+      {/* SPARKLE PARTICLES */}
       <div className="fixed inset-0 pointer-events-none">
         {[...Array(20)].map((_, i) => (
           <div
@@ -234,14 +236,12 @@ const FootballRoom = ({ onBack }) => {
       </div>
 
       <div className="relative z-10 p-6 max-w-7xl mx-auto pt-24">
-        {/* STADIUM SCOREBOARD HEADER - לוח תוצאות אלקטרוני */}
+        {/* STADIUM SCOREBOARD HEADER */}
         <div className="backdrop-blur-2xl bg-gradient-to-r from-green-900/90 via-emerald-800/90 to-green-900/90 border-4 border-yellow-400 rounded-3xl p-6 mb-6 shadow-2xl relative overflow-hidden">
-          {/* Animated border glow */}
           <div className="absolute inset-0 rounded-3xl animate-pulse" style={{
             boxShadow: '0 0 30px rgba(250, 204, 21, 0.5), inset 0 0 30px rgba(250, 204, 21, 0.1)'
           }} />
           
-          {/* LED Screen effect */}
           <div className="absolute inset-0 opacity-5 pointer-events-none" style={{
             background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.3) 2px, rgba(0,255,0,0.3) 4px)'
           }} />
@@ -254,7 +254,6 @@ const FootballRoom = ({ onBack }) => {
                 }}>
                   ⚽
                 </div>
-                {/* Rotating ring around ball */}
                 <div className="absolute inset-0 border-4 border-yellow-400 rounded-full animate-spin" style={{
                   animationDuration: '3s',
                   opacity: 0.3
@@ -287,7 +286,7 @@ const FootballRoom = ({ onBack }) => {
             </button>
           </div>
 
-          {/* DIGITAL SCOREBOARD - לוח ניקוד דיגיטלי */}
+          {/* DIGITAL SCOREBOARD */}
           <div className="relative grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
             {/* Stage Counter */}
             <div className="relative bg-black/60 backdrop-blur-sm border-4 border-blue-400/50 rounded-2xl p-5 overflow-hidden shadow-2xl group hover:scale-105 transition-transform">
@@ -521,7 +520,7 @@ const FootballRoom = ({ onBack }) => {
                   <div className="text-white text-4xl font-black tabular-nums">{formatTime(stageElapsedTime)}</div>
                 </div>
                 <div className="bg-black/50 rounded-2xl p-6 border-4 border-green-400/50 shadow-2xl">
-                  <div className="text-green-300 text-sm font-bold mb-2 flex items-center gap-2">
+                <div className="text-green-300 text-sm font-bold mb-2 flex items-center gap-2">
                     <span className="inline-block w-3 h-3 bg-yellow-400 rounded-full animate-pulse" />
                     ⚡ TIME BONUS
                   </div>
@@ -615,7 +614,7 @@ const FootballRoom = ({ onBack }) => {
         )}
       </div>
 
-      {/* ANIMATED PROGRESS BAR - פס התקדמות מואר */}
+      {/* ANIMATED PROGRESS BAR */}
       <div className="fixed bottom-0 left-0 right-0 h-3 bg-black/80 border-t-2 border-yellow-400/50">
         <div 
           className="h-full bg-gradient-to-r from-green-500 via-yellow-400 to-red-500 transition-all duration-500 relative shadow-2xl"
