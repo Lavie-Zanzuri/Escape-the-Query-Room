@@ -7,7 +7,9 @@ const FootballRoom = ({ onBack }) => {
   const [stageData, setStageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showHint, setShowHint] = useState(false);
-  const [currentHintIndex, setCurrentHintIndex] = useState(0);
+  const [currentHintIndex, setCurrentHintIndex] = useState(-1); // ✨ מתחיל מ-1 כדי שהראשון יהיה 0
+  const [hintsUsedInStage, setHintsUsedInStage] = useState(0); // ✨ ספירה של רמזים בשלב הנוכחי
+  const [totalHintsUsed, setTotalHintsUsed] = useState(0); // ✨ ספירה כוללת
   const [stageComplete, setStageComplete] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
   const [crowdSound, setCrowdSound] = useState(false);
@@ -16,6 +18,10 @@ const FootballRoom = ({ onBack }) => {
   const [stageStartTime, setStageStartTime] = useState(null);
   const [stageElapsedTime, setStageElapsedTime] = useState(0);
   const [stageTimes, setStageTimes] = useState([]);
+
+  // הגבלות רמזים
+  const MAX_HINTS_PER_STAGE = 2;
+  const MAX_HINTS_TOTAL = 3;
 
   // Goal Sound Effect
   const goalSound = new Audio('/audio/goooooaall.mp3');
@@ -28,7 +34,6 @@ const FootballRoom = ({ onBack }) => {
     if (roomData) {
       loadStageData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStage, roomData]);
 
   useEffect(() => {
@@ -60,7 +65,8 @@ const FootballRoom = ({ onBack }) => {
       setStageData(data);
       setStageComplete(false);
       setShowHint(false);
-      setCurrentHintIndex(0);
+      setCurrentHintIndex(-1); // ✨ איפוס לשלב חדש
+      setHintsUsedInStage(0); // ✨ איפוס ספירה לשלב
       setValidationError(null);
       
       setStageStartTime(Date.now());
@@ -87,13 +93,14 @@ const FootballRoom = ({ onBack }) => {
         if (validation.valid) {
           const finalTime = stageElapsedTime;
           const timeBonus = calculateTimeBonus(finalTime);
-          const hintPenalty = currentHintIndex * 20;
+          const hintPenalty = hintsUsedInStage * 20; // ✨ שימוש בספירה הנכונה
           const stageScore = Math.max(0, timeBonus - hintPenalty);
           
           setStageTimes(prev => [...prev, {
             stage: currentStage,
             time: finalTime,
-            score: stageScore
+            score: stageScore,
+            hintsUsed: hintsUsedInStage // ✨ שמירת מספר רמזים לשלב
           }]);
           
           setStageComplete(true);
@@ -135,12 +142,34 @@ const FootballRoom = ({ onBack }) => {
   };
 
   const showNextHint = () => {
-    if (stageData && currentHintIndex < stageData.hints.length - 1) {
-      setCurrentHintIndex(currentHintIndex + 1);
-      setShowHint(true);
-    } else {
-      setShowHint(true);
+    // ✨ בדיקת הגבלות
+    if (hintsUsedInStage >= MAX_HINTS_PER_STAGE) {
+      setValidationError(`⚠️ You can only use ${MAX_HINTS_PER_STAGE} hints per stage!`);
+      return;
     }
+    
+    if (totalHintsUsed >= MAX_HINTS_TOTAL) {
+      setValidationError(`⚠️ You've reached the maximum of ${MAX_HINTS_TOTAL} hints for the entire game!`);
+      return;
+    }
+
+    // ✨ בדיקה שיש עוד רמזים זמינים
+    if (stageData && currentHintIndex < stageData.hints.length - 1) {
+      const nextIndex = currentHintIndex + 1;
+      setCurrentHintIndex(nextIndex);
+      setHintsUsedInStage(prev => prev + 1); // ✨ עדכון ספירה לשלב
+      setTotalHintsUsed(prev => prev + 1); // ✨ עדכון ספירה כוללת
+      setShowHint(true);
+      setValidationError(null); // ✨ ניקוי שגיאות קודמות
+    }
+  };
+
+  // ✨ פונקציה לבדיקה האם ניתן להשתמש ברמז
+  const canUseHint = () => {
+    return hintsUsedInStage < MAX_HINTS_PER_STAGE && 
+           totalHintsUsed < MAX_HINTS_TOTAL && 
+           stageData && 
+           currentHintIndex < stageData.hints.length - 1;
   };
 
   if (loading) {
@@ -325,7 +354,7 @@ const FootballRoom = ({ onBack }) => {
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-orange-700/20 animate-pulse" />
               <div className="relative">
                 <div className="text-orange-300 text-xs font-black uppercase tracking-widest mb-2 flex items-center gap-1">
-                  <span className="inline-block w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
+                  <span className="inline-block w-3 h-3 bg-orange-400 rounded-full animate-pulse" />
                   🏁 TOTAL
                 </div>
                 <div className="text-white text-4xl font-black tabular-nums" style={{
@@ -363,8 +392,10 @@ const FootballRoom = ({ onBack }) => {
                 </div>
                 <div className="text-white text-5xl font-black tabular-nums" style={{
                   textShadow: '0 0 20px rgba(244, 114, 182, 0.8)'
-                }}>{showHint ? currentHintIndex + 1 : 0}</div>
-                <div className="text-pink-400 text-xs font-bold">-{currentHintIndex * 20} PTS</div>
+                }}>{hintsUsedInStage}</div>
+                <div className="text-pink-400 text-xs font-bold">
+                  {totalHintsUsed}/{MAX_HINTS_TOTAL} TOTAL | -{hintsUsedInStage * 20} PTS
+                </div>
               </div>
             </div>
           </div>
@@ -428,16 +459,23 @@ const FootballRoom = ({ onBack }) => {
               <div className="relative">
                 <button
                   onClick={showNextHint}
-                  disabled={showHint && currentHintIndex >= stageData.hints.length - 1}
-                  className="w-full bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 hover:from-amber-500 hover:via-yellow-600 hover:to-orange-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-black text-lg py-5 px-8 rounded-2xl transition-all transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed shadow-2xl"
+                  disabled={!canUseHint()}
+                  className={`w-full font-black text-lg py-5 px-8 rounded-2xl transition-all transform shadow-2xl ${
+                    canUseHint()
+                      ? 'bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 hover:from-amber-500 hover:via-yellow-600 hover:to-orange-600 hover:scale-105 text-white'
+                      : 'bg-gradient-to-r from-gray-600 to-gray-700 text-gray-400 cursor-not-allowed'
+                  }`}
                   style={{
-                    boxShadow: showHint && currentHintIndex < stageData.hints.length - 1 ? '0 0 30px rgba(245, 158, 11, 0.6)' : 'none'
+                    boxShadow: canUseHint() ? '0 0 30px rgba(245, 158, 11, 0.6)' : 'none'
                   }}
                 >
-                  💡 UNLOCK HINT ({Math.min(currentHintIndex + 1, stageData.hints.length)}/{stageData.hints.length})
+                  💡 UNLOCK HINT ({hintsUsedInStage}/{MAX_HINTS_PER_STAGE} used)
+                  <div className="text-xs mt-1">
+                    {totalHintsUsed}/{MAX_HINTS_TOTAL} total game hints used
+                  </div>
                 </button>
                 
-                {showHint && (
+                {showHint && currentHintIndex >= 0 && (
                   <div className="mt-6 bg-yellow-400/20 border-2 border-yellow-400/60 rounded-2xl p-6 animate-fadeIn shadow-xl" style={{
                     boxShadow: '0 0 20px rgba(250, 204, 21, 0.3)'
                   }}>
@@ -520,7 +558,7 @@ const FootballRoom = ({ onBack }) => {
                   <div className="text-white text-4xl font-black tabular-nums">{formatTime(stageElapsedTime)}</div>
                 </div>
                 <div className="bg-black/50 rounded-2xl p-6 border-4 border-green-400/50 shadow-2xl">
-                <div className="text-green-300 text-sm font-bold mb-2 flex items-center gap-2">
+                  <div className="text-green-300 text-sm font-bold mb-2 flex items-center gap-2">
                     <span className="inline-block w-3 h-3 bg-yellow-400 rounded-full animate-pulse" />
                     ⚡ TIME BONUS
                   </div>
@@ -531,7 +569,7 @@ const FootballRoom = ({ onBack }) => {
                     <span className="inline-block w-3 h-3 bg-orange-400 rounded-full animate-pulse" />
                     💡 HINTS USED
                   </div>
-                  <div className="text-orange-400 text-4xl font-black tabular-nums">-{currentHintIndex * 20}</div>
+                  <div className="text-orange-400 text-4xl font-black tabular-nums">-{hintsUsedInStage * 20}</div>
                 </div>
                 <div className="bg-gradient-to-br from-yellow-500 to-amber-600 rounded-2xl p-6 border-4 border-yellow-300 shadow-2xl" style={{
                   boxShadow: '0 0 40px rgba(250, 204, 21, 0.6)'
@@ -540,7 +578,7 @@ const FootballRoom = ({ onBack }) => {
                     <span className="inline-block w-3 h-3 bg-white rounded-full animate-pulse" />
                     🏆 STAGE SCORE
                   </div>
-                  <div className="text-white text-5xl font-black tabular-nums drop-shadow-lg">{Math.max(0, calculateTimeBonus(stageElapsedTime) - (currentHintIndex * 20))}</div>
+                  <div className="text-white text-5xl font-black tabular-nums drop-shadow-lg">{Math.max(0, calculateTimeBonus(stageElapsedTime) - (hintsUsedInStage * 20))}</div>
                 </div>
               </div>
 
@@ -576,10 +614,8 @@ const FootballRoom = ({ onBack }) => {
                       </div>
                     </div>
                     <div className="bg-black/60 rounded-2xl p-6 text-center border-4 border-yellow-400/50 shadow-2xl">
-                      <div className="text-green-300 text-sm font-bold mb-2">📊 AVG/STAGE</div>
-                      <div className="text-white text-4xl font-black tabular-nums">
-                        {formatTime(Math.floor(stageTimes.reduce((sum, st) => sum + st.time, 0) / stageTimes.length))}
-                      </div>
+                      <div className="text-green-300 text-sm font-bold mb-2">💡 TOTAL HINTS</div>
+                      <div className="text-white text-4xl font-black tabular-nums">{totalHintsUsed}</div>
                     </div>
                   </div>
 
@@ -592,6 +628,7 @@ const FootballRoom = ({ onBack }) => {
                         <div key={index} className="flex justify-between items-center bg-green-900/40 rounded-xl p-5 border-2 border-green-500/30 hover:bg-green-900/60 transition-colors">
                           <span className="text-white font-black text-xl">🎯 Stage {stageTime.stage}</span>
                           <span className="text-green-300 font-bold text-lg tabular-nums">{formatTime(stageTime.time)}</span>
+                          <span className="text-purple-400 font-bold text-lg">💡 {stageTime.hintsUsed} hints</span>
                           <span className="text-yellow-400 font-black text-xl">{stageTime.score} pts</span>
                         </div>
                       ))}
