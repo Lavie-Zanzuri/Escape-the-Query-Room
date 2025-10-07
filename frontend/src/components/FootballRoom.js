@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SQLEditor from './SQLEditor';
+import DatabaseViewer from './DatabaseViewer';
 import { Trophy, Target, Zap, Clock, Award, Lightbulb, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const FootballRoom = ({ onBack }) => {
@@ -8,9 +9,9 @@ const FootballRoom = ({ onBack }) => {
   const [stageData, setStageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showHint, setShowHint] = useState(false);
-  const [currentHintIndex, setCurrentHintIndex] = useState(-1); // ✨ מתחיל מ-1 כדי שהראשון יהיה 0
-  const [hintsUsedInStage, setHintsUsedInStage] = useState(0); // ✨ ספירה של רמזים בשלב הנוכחי
-  const [totalHintsUsed, setTotalHintsUsed] = useState(0); // ✨ ספירה כוללת
+  const [currentHintIndex, setCurrentHintIndex] = useState(-1);
+  const [hintsUsedInStage, setHintsUsedInStage] = useState(0);
+  const [totalHintsUsed, setTotalHintsUsed] = useState(0);
   const [stageComplete, setStageComplete] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
   const [crowdSound, setCrowdSound] = useState(false);
@@ -20,11 +21,9 @@ const FootballRoom = ({ onBack }) => {
   const [stageElapsedTime, setStageElapsedTime] = useState(0);
   const [stageTimes, setStageTimes] = useState([]);
 
-  // הגבלות רמזים
   const MAX_HINTS_PER_STAGE = 2;
   const MAX_HINTS_TOTAL = 3;
 
-  // Goal Sound Effect
   const goalSound = new Audio('/audio/goooooaall.mp3');
 
   useEffect(() => {
@@ -66,8 +65,8 @@ const FootballRoom = ({ onBack }) => {
       setStageData(data);
       setStageComplete(false);
       setShowHint(false);
-      setCurrentHintIndex(-1); // ✨ איפוס לשלב חדש
-      setHintsUsedInStage(0); // ✨ איפוס ספירה לשלב
+      setCurrentHintIndex(-1);
+      setHintsUsedInStage(0);
       setValidationError(null);
       
       setStageStartTime(Date.now());
@@ -94,21 +93,20 @@ const FootballRoom = ({ onBack }) => {
         if (validation.valid) {
           const finalTime = stageElapsedTime;
           const timeBonus = calculateTimeBonus(finalTime);
-          const hintPenalty = hintsUsedInStage * 20; // ✨ שימוש בספירה הנכונה
+          const hintPenalty = hintsUsedInStage * 20;
           const stageScore = Math.max(0, timeBonus - hintPenalty);
           
           setStageTimes(prev => [...prev, {
             stage: currentStage,
             time: finalTime,
             score: stageScore,
-            hintsUsed: hintsUsedInStage // ✨ שמירת מספר רמזים לשלב
+            hintsUsed: hintsUsedInStage
           }]);
           
           setStageComplete(true);
           setValidationError(null);
           setTotalScore((prev) => prev + stageScore);
 
-          // Play GOAL SOUND
           goalSound.currentTime = 0;
           goalSound.volume = 0.7;
           goalSound.play().catch(err => console.log('Audio play failed:', err));
@@ -143,7 +141,6 @@ const FootballRoom = ({ onBack }) => {
   };
 
   const showNextHint = () => {
-    // ✨ בדיקת הגבלות
     if (hintsUsedInStage >= MAX_HINTS_PER_STAGE) {
       setValidationError(`⚠️ You can only use ${MAX_HINTS_PER_STAGE} hints per stage!`);
       return;
@@ -154,18 +151,16 @@ const FootballRoom = ({ onBack }) => {
       return;
     }
 
-    // ✨ בדיקה שיש עוד רמזים זמינים
     if (stageData && currentHintIndex < stageData.hints.length - 1) {
       const nextIndex = currentHintIndex + 1;
       setCurrentHintIndex(nextIndex);
-      setHintsUsedInStage(prev => prev + 1); // ✨ עדכון ספירה לשלב
-      setTotalHintsUsed(prev => prev + 1); // ✨ עדכון ספירה כוללת
+      setHintsUsedInStage(prev => prev + 1);
+      setTotalHintsUsed(prev => prev + 1);
       setShowHint(true);
-      setValidationError(null); // ✨ ניקוי שגיאות קודמות
+      setValidationError(null);
     }
   };
 
-  // ✨ פונקציה לבדיקה האם ניתן להשתמש ברמז
   const canUseHint = () => {
     return hintsUsedInStage < MAX_HINTS_PER_STAGE && 
            totalHintsUsed < MAX_HINTS_TOTAL && 
@@ -240,30 +235,7 @@ const FootballRoom = ({ onBack }) => {
         }} />
       </div>
 
-      {/* FLOATING FOOTBALLS */}
-      <div className="fixed inset-0 pointer-events-none opacity-20">
-        <div className="absolute top-20 left-10 text-4xl animate-bounce" style={{ animationDuration: '3s', animationDelay: '0s' }}>⚽</div>
-        <div className="absolute top-40 right-20 text-3xl animate-bounce" style={{ animationDuration: '4s', animationDelay: '1s' }}>⚽</div>
-        <div className="absolute bottom-32 left-1/4 text-5xl animate-bounce" style={{ animationDuration: '5s', animationDelay: '2s' }}>⚽</div>
-        <div className="absolute top-1/3 right-1/3 text-2xl animate-bounce" style={{ animationDuration: '3.5s', animationDelay: '0.5s' }}>⚽</div>
-      </div>
 
-      {/* SPARKLE PARTICLES */}
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animationDuration: `${2 + Math.random() * 3}s`,
-              animationDelay: `${Math.random() * 2}s`,
-              opacity: 0.6
-            }}
-          />
-        ))}
-      </div>
 
       <div className="relative z-10 p-6 max-w-7xl mx-auto pt-24">
         {/* STADIUM SCOREBOARD HEADER */}
@@ -318,7 +290,6 @@ const FootballRoom = ({ onBack }) => {
 
           {/* DIGITAL SCOREBOARD */}
           <div className="relative grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
-            {/* Stage Counter */}
             <div className="relative bg-black/60 backdrop-blur-sm border-4 border-blue-400/50 rounded-2xl p-5 overflow-hidden shadow-2xl group hover:scale-105 transition-transform">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-blue-700/20 animate-pulse" />
               <div className="relative">
@@ -333,7 +304,6 @@ const FootballRoom = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Stage Timer */}
             <div className="relative bg-black/60 backdrop-blur-sm border-4 border-purple-400/50 rounded-2xl p-5 overflow-hidden shadow-2xl group hover:scale-105 transition-transform">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-purple-700/20 animate-pulse" />
               <div className="relative">
@@ -350,7 +320,6 @@ const FootballRoom = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Total Time */}
             <div className="relative bg-black/60 backdrop-blur-sm border-4 border-orange-400/50 rounded-2xl p-5 overflow-hidden shadow-2xl group hover:scale-105 transition-transform">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-orange-700/20 animate-pulse" />
               <div className="relative">
@@ -369,7 +338,6 @@ const FootballRoom = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Score */}
             <div className="relative bg-black/60 backdrop-blur-sm border-4 border-yellow-400/50 rounded-2xl p-5 overflow-hidden shadow-2xl group hover:scale-105 transition-transform">
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/20 to-yellow-700/20 animate-pulse" />
               <div className="relative">
@@ -383,7 +351,6 @@ const FootballRoom = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Hints */}
             <div className="relative bg-black/60 backdrop-blur-sm border-4 border-pink-400/50 rounded-2xl p-5 overflow-hidden shadow-2xl group hover:scale-105 transition-transform">
               <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-pink-700/20 animate-pulse" />
               <div className="relative">
@@ -403,117 +370,103 @@ const FootballRoom = ({ onBack }) => {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-5 gap-6">
-          {/* Story Section - 2 columns */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Mission Brief Card */}
-            <div className="backdrop-blur-2xl bg-gradient-to-br from-green-900/90 to-emerald-900/90 border-2 border-green-400/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 to-transparent animate-pulse" />
-              <div className="relative">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-300 via-green-400 to-emerald-500 rounded-2xl flex items-center justify-center text-3xl shadow-2xl animate-pulse" style={{
-                    boxShadow: '0 0 30px rgba(74, 222, 128, 0.6)'
-                  }}>
-                    🎯
-                  </div>
-                  <h2 className="text-3xl font-black text-white drop-shadow-lg">{stageData.title}</h2>
-                </div>
-                
-                <p className="text-green-50 text-lg leading-relaxed mb-6">{stageData.story}</p>
-                
-                <div className="bg-yellow-400/20 border-l-8 border-yellow-400 rounded-r-2xl p-6 shadow-xl" style={{
-                  boxShadow: '0 0 20px rgba(250, 204, 21, 0.3)'
-                }}>
-                  <div className="font-black text-yellow-100 text-lg mb-2 flex items-center gap-2">
-                    <span className="text-2xl">⚡</span> MISSION OBJECTIVE
-                  </div>
-                  <p className="text-yellow-50 text-base">{stageData.description}</p>
-                </div>
-              </div>
-            </div>
+        <div className="flex gap-6">
+          {/* Database Viewer Sidebar */}
+          <DatabaseViewer roomId="football" />
 
-            {/* Database Schema Card */}
-            {stageData.database_info && (
-              <div className="backdrop-blur-2xl bg-black/70 border-2 border-cyan-400/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden hover:scale-[1.02] transition-transform">
-                <div className="absolute inset-0 opacity-5" style={{
-                  background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.3) 2px, rgba(0,255,255,0.3) 4px)'
-                }} />
+          {/* Main Content */}
+          <div className="flex-1 grid lg:grid-cols-5 gap-6">
+            {/* Story Section - 2 columns */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Mission Brief Card */}
+              <div className="backdrop-blur-2xl bg-gradient-to-br from-green-900/90 to-emerald-900/90 border-2 border-green-400/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 to-transparent animate-pulse" />
                 <div className="relative">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 bg-gradient-to-br from-cyan-300 via-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center text-3xl shadow-2xl animate-pulse" style={{
-                      boxShadow: '0 0 30px rgba(34, 211, 238, 0.6)'
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-300 via-green-400 to-emerald-500 rounded-2xl flex items-center justify-center text-3xl shadow-2xl animate-pulse" style={{
+                      boxShadow: '0 0 30px rgba(74, 222, 128, 0.6)'
                     }}>
-                      💾
+                      🎯
                     </div>
-                    <h3 className="text-2xl font-black text-cyan-300 drop-shadow-lg">DATABASE SCHEMA</h3>
+                    <h2 className="text-3xl font-black text-white drop-shadow-lg">{stageData.title}</h2>
                   </div>
-                  <pre className="text-green-400 text-base font-mono leading-relaxed whitespace-pre-wrap p-4 bg-black/40 rounded-xl border border-green-500/30">
-                    {stageData.database_info}
-                  </pre>
-                </div>
-              </div>
-            )}
-
-            {/* Hints Section */}
-            <div className="backdrop-blur-2xl bg-gradient-to-br from-amber-900/80 to-orange-900/80 border-2 border-amber-400/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden hover:scale-[1.02] transition-transform">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 to-transparent animate-pulse" />
-              <div className="relative">
-                <button
-                  onClick={showNextHint}
-                  disabled={!canUseHint()}
-                  className={`w-full font-black text-lg py-5 px-8 rounded-2xl transition-all transform shadow-2xl ${
-                    canUseHint()
-                      ? 'bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 hover:from-amber-500 hover:via-yellow-600 hover:to-orange-600 hover:scale-105 text-white'
-                      : 'bg-gradient-to-r from-gray-600 to-gray-700 text-gray-400 cursor-not-allowed'
-                  }`}
-                  style={{
-                    boxShadow: canUseHint() ? '0 0 30px rgba(245, 158, 11, 0.6)' : 'none'
-                  }}
-                >
-                  💡 UNLOCK HINT ({hintsUsedInStage}/{MAX_HINTS_PER_STAGE} used)
-                  <div className="text-xs mt-1">
-                    {totalHintsUsed}/{MAX_HINTS_TOTAL} total game hints used
-                  </div>
-                </button>
-                
-                {showHint && currentHintIndex >= 0 && (
-                  <div className="mt-6 bg-yellow-400/20 border-2 border-yellow-400/60 rounded-2xl p-6 animate-fadeIn shadow-xl" style={{
+                  
+                  <p className="text-green-50 text-lg leading-relaxed mb-6">{stageData.story}</p>
+                  
+                  <div className="bg-yellow-400/20 border-l-8 border-yellow-400 rounded-r-2xl p-6 shadow-xl" style={{
                     boxShadow: '0 0 20px rgba(250, 204, 21, 0.3)'
                   }}>
-                    <div className="flex items-start gap-4">
-                      <span className="text-4xl">💡</span>
-                      <p className="text-yellow-50 text-lg leading-relaxed flex-1 font-semibold">{stageData.hints[currentHintIndex]}</p>
+                    <div className="font-black text-yellow-100 text-lg mb-2 flex items-center gap-2">
+                      <span className="text-2xl">⚡</span> MISSION OBJECTIVE
                     </div>
+                    <p className="text-yellow-50 text-base">{stageData.description}</p>
                   </div>
-                )}
+                </div>
+              </div>
+
+
+
+              {/* Hints Section */}
+              <div className="backdrop-blur-2xl bg-gradient-to-br from-amber-900/80 to-orange-900/80 border-2 border-amber-400/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden hover:scale-[1.02] transition-transform">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 to-transparent animate-pulse" />
+                <div className="relative">
+                  <button
+                    onClick={showNextHint}
+                    disabled={!canUseHint()}
+                    className={`w-full font-black text-lg py-5 px-8 rounded-2xl transition-all transform shadow-2xl ${
+                      canUseHint()
+                        ? 'bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 hover:from-amber-500 hover:via-yellow-600 hover:to-orange-600 hover:scale-105 text-white'
+                        : 'bg-gradient-to-r from-gray-600 to-gray-700 text-gray-400 cursor-not-allowed'
+                    }`}
+                    style={{
+                      boxShadow: canUseHint() ? '0 0 30px rgba(245, 158, 11, 0.6)' : 'none'
+                    }}
+                  >
+                    💡 UNLOCK HINT ({hintsUsedInStage}/{MAX_HINTS_PER_STAGE} used)
+                    <div className="text-xs mt-1">
+                      {totalHintsUsed}/{MAX_HINTS_TOTAL} total game hints used
+                    </div>
+                  </button>
+                  
+                  {showHint && currentHintIndex >= 0 && (
+                    <div className="mt-6 bg-yellow-400/20 border-2 border-yellow-400/60 rounded-2xl p-6 animate-fadeIn shadow-xl" style={{
+                      boxShadow: '0 0 20px rgba(250, 204, 21, 0.3)'
+                    }}>
+                      <div className="flex items-start gap-4">
+                        <span className="text-4xl">💡</span>
+                        <p className="text-yellow-50 text-lg leading-relaxed flex-1 font-semibold">{stageData.hints[currentHintIndex]}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* SQL Editor Section - 3 columns */}
-          <div className="lg:col-span-3">
-            <div className="backdrop-blur-2xl bg-white/98 rounded-3xl shadow-2xl overflow-hidden border-4 border-gray-300 hover:scale-[1.01] transition-transform">
-              <SQLEditor 
-                roomId="football"
-                onQuerySuccess={handleQuerySuccess}
-                hideDbInfo={true}
-              />
-              
-              {validationError && (
-                <div className="p-6 pt-0">
-                  <div className="bg-red-50 border-red-400 border-4 rounded-2xl p-6 shadow-xl animate-pulse">
-                    <div className="flex items-start gap-4">
-                      <span className="text-5xl">❌</span>
-                      <div className="flex-1">
-                        <div className="font-black text-red-900 text-xl mb-2">NOT QUITE RIGHT!</div>
-                        <div className="text-red-700 text-lg font-semibold">
-                          {validationError}
+            {/* SQL Editor Section - 3 columns */}
+            <div className="lg:col-span-3">
+              <div className="backdrop-blur-2xl bg-white/98 rounded-3xl shadow-2xl overflow-hidden border-4 border-gray-300 hover:scale-[1.01] transition-transform">
+                <SQLEditor 
+                  roomId="football"
+                  onQuerySuccess={handleQuerySuccess}
+                  hideDbInfo={true}
+                />
+                
+                {validationError && (
+                  <div className="p-6 pt-0">
+                    <div className="bg-red-50 border-red-400 border-4 rounded-2xl p-6 shadow-xl animate-pulse">
+                      <div className="flex items-start gap-4">
+                        <span className="text-5xl">❌</span>
+                        <div className="flex-1">
+                          <div className="font-black text-red-900 text-xl mb-2">NOT QUITE RIGHT!</div>
+                          <div className="text-red-700 text-lg font-semibold">
+                            {validationError}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>

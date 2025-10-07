@@ -22,7 +22,6 @@ const CasinoRoom = ({ onBack }) => {
   const MAX_HINTS_PER_STAGE = 2;
   const MAX_HINTS_TOTAL = 3;
 
-  // Jackpot Sound Effect
   const jackpotSound = new Audio('/audio/jackpot.mp3');
 
   useEffect(() => {
@@ -106,7 +105,6 @@ const CasinoRoom = ({ onBack }) => {
           setValidationError(null);
           setTotalScore((prev) => prev + stageScore);
 
-          // Play JACKPOT SOUND
           jackpotSound.currentTime = 0;
           jackpotSound.volume = 0.7;
           jackpotSound.play().catch(err => console.log('Audio play failed:', err));
@@ -208,7 +206,6 @@ const CasinoRoom = ({ onBack }) => {
         <source src="/videos/veo_casino_background.mp4" type="video/mp4" />
       </video>
 
-      {/* Dark overlay to keep text readable */}
       <div className="fixed inset-0 bg-black/30 pointer-events-none z-0" />
 
       <div className="relative z-10 p-6 max-w-7xl mx-auto pt-24">
@@ -251,7 +248,6 @@ const CasinoRoom = ({ onBack }) => {
 
           {/* DIGITAL SCOREBOARD */}
           <div className="relative grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
-            {/* Stage Counter */}
             <div className="relative bg-black/80 backdrop-blur-sm border-4 border-red-500/50 rounded-2xl p-5 overflow-hidden shadow-2xl group hover:scale-105 transition-transform">
               <div className="absolute inset-0 bg-gradient-to-br from-red-600/30 to-red-900/30 animate-pulse" />
               <div className="relative">
@@ -266,7 +262,6 @@ const CasinoRoom = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Stage Timer */}
             <div className="relative bg-black/80 backdrop-blur-sm border-4 border-yellow-500/50 rounded-2xl p-5 overflow-hidden shadow-2xl group hover:scale-105 transition-transform">
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/30 to-yellow-900/30 animate-pulse" />
               <div className="relative">
@@ -283,7 +278,6 @@ const CasinoRoom = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Total Time */}
             <div className="relative bg-black/80 backdrop-blur-sm border-4 border-orange-500/50 rounded-2xl p-5 overflow-hidden shadow-2xl group hover:scale-105 transition-transform">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-600/30 to-orange-900/30 animate-pulse" />
               <div className="relative">
@@ -302,7 +296,6 @@ const CasinoRoom = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Score */}
             <div className="relative bg-black/80 backdrop-blur-sm border-4 border-yellow-500/50 rounded-2xl p-5 overflow-hidden shadow-2xl group hover:scale-105 transition-transform">
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/30 to-yellow-900/30 animate-pulse" />
               <div className="relative">
@@ -316,7 +309,6 @@ const CasinoRoom = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Hints */}
             <div className="relative bg-black/80 backdrop-blur-sm border-4 border-purple-500/50 rounded-2xl p-5 overflow-hidden shadow-2xl group hover:scale-105 transition-transform">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 to-purple-900/30 animate-pulse" />
               <div className="relative">
@@ -369,28 +361,6 @@ const CasinoRoom = ({ onBack }) => {
                 </div>
               </div>
             </div>
-
-            {/* Database Schema Card */}
-            {stageData.database_info && (
-              <div className="backdrop-blur-2xl bg-black/80 border-2 border-green-500/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden hover:scale-[1.02] transition-transform">
-                <div className="absolute inset-0 opacity-5" style={{
-                  background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.3) 2px, rgba(0,255,0,0.3) 4px)'
-                }} />
-                <div className="relative">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 bg-gradient-to-br from-green-400 via-green-500 to-green-700 rounded-2xl flex items-center justify-center text-3xl shadow-2xl animate-pulse" style={{
-                      boxShadow: '0 0 30px rgba(34, 197, 94, 0.6)'
-                    }}>
-                      💾
-                    </div>
-                    <h3 className="text-2xl font-black text-green-400 drop-shadow-lg">DATABASE ACCESS</h3>
-                  </div>
-                  <pre className="text-green-400 text-base font-mono leading-relaxed whitespace-pre-wrap p-4 bg-black/40 rounded-xl border border-green-500/30">
-                    {stageData.database_info}
-                  </pre>
-                </div>
-              </div>
-            )}
 
             {/* Hints Section */}
             <div className="backdrop-blur-2xl bg-gradient-to-br from-purple-900/80 to-black/80 border-2 border-purple-500/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden hover:scale-[1.02] transition-transform">
