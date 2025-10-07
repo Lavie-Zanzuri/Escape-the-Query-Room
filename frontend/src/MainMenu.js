@@ -237,7 +237,7 @@ function MainMenu({ onSelectRoom }) {
             &gt; ACCESS GRANTED<br/>
             &gt; SELECT YOUR MISSION
           </TerminalText>
-          <GameTitle>SQL QUEST</GameTitle>
+          <GameTitle>Escape the Query Room</GameTitle>
           <Subtitle>// SELECT YOUR ESCAPE ROOM //</Subtitle>
         </TerminalHeader>
 
@@ -250,19 +250,19 @@ function MainMenu({ onSelectRoom }) {
               Infiltrate the UEFA database to expose corruption. Navigate through player records, team finances, and suspicious match results.
             </RoomDescription>
             <RoomMeta>
-              5 STAGES • DIFFICULTY: MEDIUM • SQL JOINS REQUIRED
+              5 STAGES
             </RoomMeta>
           </RoomCard>
 
-          <RoomCard className="coming-soon">
-            <StatusBadge style={{borderColor: '#666', color: '#666', background: 'rgba(102,102,102,0.2)'}}>LOCKED</StatusBadge>
-            <RoomIcon>🏦</RoomIcon>
-            <RoomTitle>Bank Heist</RoomTitle>
+          <RoomCard onClick={() => onSelectRoom('casino')}>
+            <StatusBadge>AVAILABLE</StatusBadge>
+            <RoomIcon>🎰</RoomIcon>
+            <RoomTitle>Casino Heist</RoomTitle>
             <RoomDescription>
-              Break into the Federal Reserve database. Track transactions, identify money laundering patterns, and escape with the evidence.
+              Hack into the casino's rigged system and expose the fraud. Track rigged machines, identify victims, and catch the mastermind.
             </RoomDescription>
-            <RoomMeta style={{color: '#666'}}>
-              COMING SOON
+            <RoomMeta>
+              5 STAGES
             </RoomMeta>
           </RoomCard>
 
