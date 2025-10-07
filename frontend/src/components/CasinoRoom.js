@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SQLEditor from './SQLEditor';
+import DatabaseViewer from './DatabaseViewer';
 
 const CasinoRoom = ({ onBack }) => {
   const [currentStage, setCurrentStage] = useState(1);
@@ -22,7 +23,7 @@ const CasinoRoom = ({ onBack }) => {
   const MAX_HINTS_TOTAL = 3;
 
   // Jackpot Sound Effect
-  const jackpotSound = new Audio('/audio/cash-register-purchase-87313.mp3');
+  const jackpotSound = new Audio('/audio/jackpot.mp3');
 
   useEffect(() => {
     loadRoomData();
@@ -363,7 +364,12 @@ const CasinoRoom = ({ onBack }) => {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-5 gap-6">
+        <div className="flex gap-6">
+          {/* Database Viewer Sidebar */}
+          <DatabaseViewer roomId="casino" />
+
+          {/* Main Content */}
+          <div className="flex-1 grid lg:grid-cols-5 gap-6">
           {/* Story Section - 2 columns */}
           <div className="lg:col-span-2 space-y-6">
             {/* Mission Brief Card */}
@@ -474,6 +480,7 @@ const CasinoRoom = ({ onBack }) => {
                 </div>
               )}
             </div>
+          </div>
           </div>
         </div>
 
