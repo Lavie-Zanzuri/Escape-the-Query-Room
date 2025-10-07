@@ -196,48 +196,20 @@ const CasinoRoom = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{
-      background: 'linear-gradient(135deg, #1a0000 0%, #4a0000 25%, #000000 50%, #4a0000 75%, #1a0000 100%)'
-    }}>
-      {/* VEGAS LIGHTS BACKGROUND */}
-      <div className="fixed inset-0 opacity-20 pointer-events-none">
-        <div style={{
-          background: `repeating-linear-gradient(
-            0deg,
-            #ff0000 0px,
-            #ff0000 4px,
-            transparent 4px,
-            transparent 8px
-          )`
-        }} className="w-full h-full animate-pulse" />
-      </div>
+    <div className="min-h-screen relative overflow-hidden bg-black">
+      {/* VIDEO BACKGROUND */}
+      <video 
+        autoPlay 
+        loop 
+        muted 
+        playsInline
+        className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none z-0"
+      >
+        <source src="/videos/veo_casino_background.mp4" type="video/mp4" />
+      </video>
 
-      {/* FLOATING CARDS */}
-      <div className="fixed inset-0 pointer-events-none opacity-10">
-        <div className="absolute top-20 left-10 text-6xl animate-bounce" style={{ animationDuration: '3s', animationDelay: '0s' }}>🃏</div>
-        <div className="absolute top-40 right-20 text-5xl animate-bounce" style={{ animationDuration: '4s', animationDelay: '1s' }}>💎</div>
-        <div className="absolute bottom-32 left-1/4 text-7xl animate-bounce" style={{ animationDuration: '5s', animationDelay: '2s' }}>🎰</div>
-        <div className="absolute top-1/3 right-1/3 text-4xl animate-bounce" style={{ animationDuration: '3.5s', animationDelay: '0.5s' }}>💰</div>
-      </div>
-
-      {/* SPARKLE PARTICLES */}
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(30)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 rounded-full animate-pulse"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              background: i % 2 === 0 ? '#FFD700' : '#FF0000',
-              animationDuration: `${2 + Math.random() * 3}s`,
-              animationDelay: `${Math.random() * 2}s`,
-              boxShadow: `0 0 ${10 + Math.random() * 10}px ${i % 2 === 0 ? '#FFD700' : '#FF0000'}`,
-              opacity: 0.7
-            }}
-          />
-        ))}
-      </div>
+      {/* Dark overlay to keep text readable */}
+      <div className="fixed inset-0 bg-black/30 pointer-events-none z-0" />
 
       <div className="relative z-10 p-6 max-w-7xl mx-auto pt-24">
         {/* CASINO HEADER */}
@@ -398,7 +370,27 @@ const CasinoRoom = ({ onBack }) => {
               </div>
             </div>
 
-            
+            {/* Database Schema Card */}
+            {stageData.database_info && (
+              <div className="backdrop-blur-2xl bg-black/80 border-2 border-green-500/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden hover:scale-[1.02] transition-transform">
+                <div className="absolute inset-0 opacity-5" style={{
+                  background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.3) 2px, rgba(0,255,0,0.3) 4px)'
+                }} />
+                <div className="relative">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-14 h-14 bg-gradient-to-br from-green-400 via-green-500 to-green-700 rounded-2xl flex items-center justify-center text-3xl shadow-2xl animate-pulse" style={{
+                      boxShadow: '0 0 30px rgba(34, 197, 94, 0.6)'
+                    }}>
+                      💾
+                    </div>
+                    <h3 className="text-2xl font-black text-green-400 drop-shadow-lg">DATABASE ACCESS</h3>
+                  </div>
+                  <pre className="text-green-400 text-base font-mono leading-relaxed whitespace-pre-wrap p-4 bg-black/40 rounded-xl border border-green-500/30">
+                    {stageData.database_info}
+                  </pre>
+                </div>
+              </div>
+            )}
 
             {/* Hints Section */}
             <div className="backdrop-blur-2xl bg-gradient-to-br from-purple-900/80 to-black/80 border-2 border-purple-500/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden hover:scale-[1.02] transition-transform">
@@ -442,6 +434,7 @@ const CasinoRoom = ({ onBack }) => {
               <SQLEditor 
                 roomId="casino"
                 onQuerySuccess={handleQuerySuccess}
+                hideDbInfo={true}
               />
               
               {validationError && (
