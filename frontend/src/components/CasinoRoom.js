@@ -398,27 +398,7 @@ const CasinoRoom = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Database Schema Card */}
-            {stageData.database_info && (
-              <div className="backdrop-blur-2xl bg-black/80 border-2 border-green-500/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden hover:scale-[1.02] transition-transform">
-                <div className="absolute inset-0 opacity-5" style={{
-                  background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.3) 2px, rgba(0,255,0,0.3) 4px)'
-                }} />
-                <div className="relative">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 bg-gradient-to-br from-green-400 via-green-500 to-green-700 rounded-2xl flex items-center justify-center text-3xl shadow-2xl animate-pulse" style={{
-                      boxShadow: '0 0 30px rgba(34, 197, 94, 0.6)'
-                    }}>
-                      💾
-                    </div>
-                    <h3 className="text-2xl font-black text-green-400 drop-shadow-lg">DATABASE ACCESS</h3>
-                  </div>
-                  <pre className="text-green-400 text-base font-mono leading-relaxed whitespace-pre-wrap p-4 bg-black/40 rounded-xl border border-green-500/30">
-                    {stageData.database_info}
-                  </pre>
-                </div>
-              </div>
-            )}
+            
 
             {/* Hints Section */}
             <div className="backdrop-blur-2xl bg-gradient-to-br from-purple-900/80 to-black/80 border-2 border-purple-500/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden hover:scale-[1.02] transition-transform">

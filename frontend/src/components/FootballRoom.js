@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SQLEditor from './SQLEditor';
+import { Trophy, Target, Zap, Clock, Award, Lightbulb, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const FootballRoom = ({ onBack }) => {
   const [currentStage, setCurrentStage] = useState(1);
@@ -278,10 +279,10 @@ const FootballRoom = ({ onBack }) => {
           <div className="relative flex items-center justify-between mb-4 flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <div className="w-20 h-20 bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-4xl shadow-2xl animate-pulse" style={{
+                <div className="w-20 h-20 bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-2xl animate-pulse" style={{
                   boxShadow: '0 0 40px rgba(250, 204, 21, 0.8), 0 0 60px rgba(250, 204, 21, 0.4)'
                 }}>
-                  ⚽
+                  <Trophy className="w-12 h-12 text-white" strokeWidth={2.5} />
                 </div>
                 <div className="absolute inset-0 border-4 border-yellow-400 rounded-full animate-spin" style={{
                   animationDuration: '3s',
@@ -495,6 +496,7 @@ const FootballRoom = ({ onBack }) => {
               <SQLEditor 
                 roomId="football"
                 onQuerySuccess={handleQuerySuccess}
+                hideDbInfo={true}
               />
               
               {validationError && (

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './SQLEditor.css';
 
-const SQLEditor = ({ roomId = 'sample', onQuerySuccess }) => {
+const SQLEditor = ({ roomId = 'sample', onQuerySuccess, hideDbInfo = false }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -73,6 +73,12 @@ const SQLEditor = ({ roomId = 'sample', onQuerySuccess }) => {
           tables: 'teams, players, matches',
           icon: '⚽'
         };
+      case 'casino':
+        return {
+          name: 'Casino Database',
+          tables: 'slot_machines, players, games, employees, suspicious_events',
+          icon: '🎰'
+        };
       case 'sample':
       default:
         return {
@@ -87,16 +93,6 @@ const SQLEditor = ({ roomId = 'sample', onQuerySuccess }) => {
 
   return (
     <div className="sql-editor">
-      <div className="editor-header">
-        <div className="database-info">
-          <span className="db-icon">{dbInfo.icon}</span>
-          <div>
-            <strong>{dbInfo.name}</strong>
-            <div className="tables-info">Tables: {dbInfo.tables}</div>
-          </div>
-        </div>
-      </div>
-
       <div className="query-section">
         <label className="query-label">SQL Query Editor:</label>
         <textarea
@@ -104,13 +100,7 @@ const SQLEditor = ({ roomId = 'sample', onQuerySuccess }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={`Write your SQL query here...
-
-Examples:
-SELECT * FROM ${roomId === 'football' ? 'players' : 'students'};
-SELECT name FROM ${roomId === 'football' ? 'teams' : 'courses'};
-
-Press Ctrl+Enter (or Cmd+Enter) to run the query`}
+          placeholder="Write your SQL query here..."
         />
       </div>
 
