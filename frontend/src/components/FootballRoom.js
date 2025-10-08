@@ -24,7 +24,7 @@ const FootballRoom = ({ onBack }) => {
   const MAX_HINTS_PER_STAGE = 2;
   const MAX_HINTS_TOTAL = 3;
 
-  // AI Hint states - NEW!
+  // AI Hint states
   const [aiHint, setAiHint] = useState(null);
   const [aiHintsUsed, setAiHintsUsed] = useState(0);
   const [lastQuery, setLastQuery] = useState('');
@@ -75,6 +75,7 @@ const FootballRoom = ({ onBack }) => {
       setCurrentHintIndex(-1);
       setHintsUsedInStage(0);
       setValidationError(null);
+      setAiHint(null);
       
       setStageStartTime(Date.now());
       setStageElapsedTime(0);
@@ -85,7 +86,6 @@ const FootballRoom = ({ onBack }) => {
 
   const handleQuerySuccess = async (result) => {
     if (result.success && result.row_count > 0 && !stageComplete) {
-      // Save last query - NEW!
       setLastQuery(result.query || '');
       
       try {
@@ -178,7 +178,6 @@ const FootballRoom = ({ onBack }) => {
            currentHintIndex < stageData.hints.length - 1;
   };
 
-  // AI Hint function - NEW!
   const getAiHint = async () => {
     if (aiHintsUsed >= MAX_AI_HINTS) {
       setValidationError(`⚠️ You can only use ${MAX_AI_HINTS} AI hint per game!`);
@@ -188,13 +187,17 @@ const FootballRoom = ({ onBack }) => {
     setIsLoadingAiHint(true);
     setValidationError(null);
 
+    // שלח את כל הרמזים המובנים של השלב
+    const allStageHints = stageData.hints || [];
+
     try {
       const response = await fetch(`http://localhost:5000/api/ai-hint/football/${currentStage}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           last_query: lastQuery,
-          error: validationError || 'No error'
+          error: validationError || 'No error',
+          existing_hints: allStageHints
         })
       });
 
@@ -449,7 +452,7 @@ const FootballRoom = ({ onBack }) => {
                 </div>
               </div>
 
-              {/* Hints Section - WITH AI HINT! */}
+              {/* Hints Section */}
               <div className="backdrop-blur-2xl bg-gradient-to-br from-amber-900/80 to-orange-900/80 border-2 border-amber-400/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden hover:scale-[1.02] transition-transform">
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 to-transparent animate-pulse" />
                 <div className="relative space-y-4">
@@ -472,7 +475,7 @@ const FootballRoom = ({ onBack }) => {
                     </div>
                   </button>
 
-                  {/* AI Hint Button - NEW! */}
+                  {/* AI Hint Button */}
                   <button
                     onClick={getAiHint}
                     disabled={aiHintsUsed >= MAX_AI_HINTS || isLoadingAiHint}
@@ -492,9 +495,9 @@ const FootballRoom = ({ onBack }) => {
                       </>
                     ) : (
                       <>
-                        🤖 AI HINT ({aiHintsUsed}/{MAX_AI_HINTS} used)
+                        🤖 AI STRATEGIC HINT ({aiHintsUsed}/{MAX_AI_HINTS} used)
                         <div className="text-xs mt-1">
-                          Powered by Gemini • -30 pts
+                          Powered by Gemini • -30 pts • Unique perspective
                         </div>
                       </>
                     )}
@@ -512,7 +515,7 @@ const FootballRoom = ({ onBack }) => {
                     </div>
                   )}
 
-                  {/* Show AI Hint - NEW! */}
+                  {/* Show AI Hint */}
                   {aiHint && (
                     <div className="mt-6 bg-gradient-to-br from-blue-900/40 to-purple-900/40 border-2 border-purple-400/60 rounded-2xl p-6 animate-fadeIn shadow-xl" style={{
                       boxShadow: '0 0 20px rgba(168, 85, 247, 0.4)'
@@ -520,7 +523,7 @@ const FootballRoom = ({ onBack }) => {
                       <div className="flex items-start gap-4">
                         <span className="text-4xl">🤖</span>
                         <div className="flex-1">
-                          <div className="text-purple-300 text-xs font-bold uppercase mb-2">AI-Powered Hint</div>
+                          <div className="text-purple-300 text-xs font-bold uppercase mb-2">🎯 AI Strategic Hint (Unique Perspective)</div>
                           <p className="text-purple-50 text-lg leading-relaxed font-semibold">{aiHint}</p>
                         </div>
                       </div>

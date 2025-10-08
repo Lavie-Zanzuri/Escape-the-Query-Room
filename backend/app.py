@@ -1098,7 +1098,7 @@ def validate_casino_query(stage_id):
 
 @app.route('/api/ai-hint/<room_id>/<int:stage_id>', methods=['POST'])
 def get_ai_hint(room_id, stage_id):
-    """Generate AI hint for current stage using Gemini"""
+    """Generate AI hint for current stage using Gemini - provides unique strategic perspective"""
     if not GEMINI_API_KEY:
         return jsonify({
             'error': 'AI hints are temporarily unavailable. Try the regular hints!'
@@ -1108,6 +1108,7 @@ def get_ai_hint(room_id, stage_id):
         data = request.json
         last_query = data.get('last_query', 'No query attempted yet')
         error = data.get('error', 'No error')
+        existing_hints = data.get('existing_hints', [])  # Get all built-in hints
         
         # Get stage data based on room
         if room_id == 'football':
@@ -1137,21 +1138,60 @@ def get_ai_hint(room_id, stage_id):
         else:
             return jsonify({'error': 'Room not found'}), 404
         
-        # Build the prompt for Gemini
-        prompt = f"""You are a helpful SQL tutor. A student is working on this challenge:
+        # Build hints text showing all existing hints
+        hints_text = ""
+        if existing_hints:
+            hints_text = "\n\n🚫 CRITICAL: These hints are ALREADY available to the student:\n"
+            hints_text += "\n".join([f"- {hint}" for hint in existing_hints])
+            hints_text += "\n\n⚡ YOUR HINT MUST:\n"
+            hints_text += "- Be COMPLETELY DIFFERENT from all hints above\n"
+            hints_text += "- Provide UNIQUE value that the regular hints don't cover\n"
+            hints_text += "- Take a DIFFERENT ANGLE or approach to the problem\n"
+            hints_text += "- Focus on STRATEGY and THINKING, not exact syntax"
+        
+# Replace the prompt section in get_ai_hint() function with this improved version:
+
+        # Build the enhanced prompt for Gemini
+        prompt = f"""You are an expert SQL tutor. Your mission: provide a STRATEGIC hint that helps students THINK differently.
 
 Challenge: {challenge}
+Database Schema: {db_info}
+Student's last query: {last_query}
+Error/Issue: {error}{hints_text}
 
-Database Schema:
-{db_info}
+🎯 CRITICAL RULES:
+1. DO NOT use technical SQL keywords that appear in existing hints (WHERE, AND, OR, SELECT, etc.)
+2. DO NOT mention specific values from the hints (like 'Forward', '20', column names)
+3. MUST use strategic thinking words: "think about", "consider", "ask yourself", "approach", "strategy"
+4. MUST be 1-2 sentences maximum
+5. Focus on the PROCESS of solving, not the SYNTAX
 
-The student's last query: {last_query}
-Error/Issue: {error}
+🎓 EXAMPLES OF GOOD STRATEGIC HINTS:
 
-Give a SHORT, helpful hint (1-2 sentences max) to guide them toward the solution.
-Don't give the full answer - just a gentle nudge in the right direction.
-Be encouraging and educational. Focus on SQL concepts."""
+If no query yet:
+✅ "Think about this in two steps: first identify WHAT type of records you need, then HOW to measure their performance."
+✅ "Ask yourself: what makes a player qualify for this list? Break it into separate criteria."
 
+If missing filters:
+✅ "You're looking at everyone in the dataset. Consider: what requirements must each record meet to be included?"
+✅ "Think about adding conditions that narrow down your results. What makes some records relevant and others not?"
+
+If partially correct:
+✅ "Great progress! Now think: are you requiring ALL conditions to be true, or just ONE of them?"
+✅ "You've got part of it! Consider: when you have multiple requirements, how do they work together?"
+
+If syntax error:
+✅ "Think about how SQL knows the difference between your data values and column names in your table."
+✅ "Consider: how does SQL understand what's literal text versus what's a reference to a column?"
+
+🚫 BAD EXAMPLES (too technical):
+❌ "Use WHERE to filter"
+❌ "You need AND instead of OR"  
+❌ "Add goals_scored > 20"
+
+Now provide your strategic hint:"""
+
+        # Rest of the function stays the same...
         # Call Gemini API
         model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(prompt)
