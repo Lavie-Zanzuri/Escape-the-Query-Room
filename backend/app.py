@@ -6,6 +6,21 @@ import os
 import json
 from datetime import datetime
 
+# AI Hints Support
+from dotenv import load_dotenv
+import google.generativeai as genai
+
+# Load environment variables and configure Gemini AI
+load_dotenv()
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    print("✅ Gemini AI configured successfully!")
+else:
+    print("⚠️ Warning: GEMINI_API_KEY not found in .env file")
+    print("⚠️ AI hints will not be available")
+
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
@@ -285,7 +300,8 @@ def execute_sql_room(room_id):
             'data': data_results,
             'columns': columns,
             'row_count': len(data_results),
-            'message': f'Query executed successfully! Found {len(data_results)} rows.'
+            'message': f'Query executed successfully! Found {len(data_results)} rows.',
+            'query': query
         })
         
     except Exception as e:
@@ -773,29 +789,15 @@ def create_football_database():
         print("📊 Football database already exists")
         return False
 
-def initialize_app():
-    """Initialize database and sample data"""
-    with app.app_context():
-        db.create_all()
-        print("✅ Main database tables created!")
-        create_sample_database()
-        create_football_database()
-        create_casino_database()
-
-# הוסף את הקוד הזה ל-app.py שלך (בסוף הקובץ, לפני if __name__ == '__main__')
-
-import sqlite3
-import os
-
-# ==================== CASINO DATABASE CREATION ====================
-
 def create_casino_database():
     """Create casino database with all tables and sample data"""
-    db_path = 'casino.db'
+    db_path = 'database/casino.db'
     
-    # מחיקת DB קיים אם יש
+    if not os.path.exists('database'):
+        os.makedirs('database')
+    
     if os.path.exists(db_path):
-        print("🎰 Casino database already exists, skipping creation...")
+        print("🎰 Casino database already exists")
         return False
     
     print("🎰 Creating Casino Heist database...")
@@ -803,7 +805,6 @@ def create_casino_database():
     cursor = conn.cursor()
     
     try:
-        # ========== SLOT MACHINES TABLE ==========
         cursor.execute('''
         CREATE TABLE slot_machines (
             machine_id INTEGER PRIMARY KEY,
@@ -815,24 +816,22 @@ def create_casino_database():
         )
         ''')
         
-        # Sample slot machines data
         machines_data = [
             (1, 'Lucky 777', 'Main Floor', 92.5, '2023-01-15', 'Active'),
             (2, 'Diamond Jackpot', 'Main Floor', 94.2, '2023-02-20', 'Active'),
             (3, 'Golden Spin', 'VIP Room', 95.8, '2023-03-10', 'Active'),
             (4, 'Cherry Blast', 'Main Floor', 91.3, '2023-01-25', 'Active'),
             (5, 'Royal Flush', 'VIP Room', 96.5, '2023-04-05', 'Active'),
-            (6, 'Mega Fortune', 'Main Floor', 78.2, '2023-05-12', 'Active'),  # Suspicious!
+            (6, 'Mega Fortune', 'Main Floor', 78.2, '2023-05-12', 'Active'),
             (7, 'Wild West', 'Side Hall', 93.1, '2023-02-14', 'Active'),
             (8, 'Pirate\'s Gold', 'Side Hall', 92.8, '2023-03-22', 'Active'),
-            (9, 'Egyptian Treasure', 'Main Floor', 76.5, '2023-06-01', 'Active'),  # Suspicious!
+            (9, 'Egyptian Treasure', 'Main Floor', 76.5, '2023-06-01', 'Active'),
             (10, 'Space Adventure', 'VIP Room', 94.7, '2023-04-18', 'Active'),
-            (11, 'Lucky Clover', 'Main Floor', 75.8, '2023-06-15', 'Active'),  # Suspicious!
+            (11, 'Lucky Clover', 'Main Floor', 75.8, '2023-06-15', 'Active'),
             (12, 'Dragon\'s Lair', 'VIP Room', 95.2, '2023-05-20', 'Active')
         ]
         cursor.executemany('INSERT INTO slot_machines VALUES (?,?,?,?,?,?)', machines_data)
         
-        # ========== PLAYERS TABLE ==========
         cursor.execute('''
         CREATE TABLE players (
             player_id INTEGER PRIMARY KEY,
@@ -850,16 +849,15 @@ def create_casino_database():
             (2, 'LuckyStrike', 'lucky@email.com', 'Gold', '2023-02-15', 85000.00, 95000.00),
             (3, 'SlotMaster', 'slotmaster@email.com', 'Silver', '2023-03-20', 45000.00, 38000.00),
             (4, 'JackpotHunter', 'jackpot@email.com', 'Bronze', '2023-04-05', 25000.00, 18000.00),
-            (5, 'CasinoKing', 'king@email.com', 'Platinum', '2023-01-25', 200000.00, 95000.00),  # Lost a lot!
+            (5, 'CasinoKing', 'king@email.com', 'Platinum', '2023-01-25', 200000.00, 95000.00),
             (6, 'SpinQueen', 'queen@email.com', 'Gold', '2023-02-28', 65000.00, 48000.00),
             (7, 'BetBig', 'betbig@email.com', 'Silver', '2023-05-10', 35000.00, 22000.00),
             (8, 'WinnerCircle', 'winner@email.com', 'Bronze', '2023-06-01', 15000.00, 8500.00),
-            (9, 'MegaPlayer', 'mega@email.com', 'Platinum', '2023-03-15', 180000.00, 75000.00),  # Lost a lot!
+            (9, 'MegaPlayer', 'mega@email.com', 'Platinum', '2023-03-15', 180000.00, 75000.00),
             (10, 'FortuneFinder', 'fortune@email.com', 'Gold', '2023-04-20', 55000.00, 62000.00)
         ]
         cursor.executemany('INSERT INTO players VALUES (?,?,?,?,?,?,?)', players_data)
         
-        # ========== GAMES TABLE ==========
         cursor.execute('''
         CREATE TABLE games (
             game_id INTEGER PRIMARY KEY,
@@ -874,39 +872,27 @@ def create_casino_database():
         )
         ''')
         
-        # Sample games data - strategically placed for puzzles
         games_data = [
-            # Player 1 - normal games
             (1, 1, 1, 100.00, 50.00, '2024-01-15 14:30:00', 45),
             (2, 1, 2, 150.00, 200.00, '2024-01-15 15:45:00', 60),
             (3, 1, 3, 200.00, 180.00, '2024-01-15 16:20:00', 55),
-            
-            # Player 5 - lots of losses on suspicious machines
             (4, 5, 6, 500.00, 50.00, '2024-01-16 10:15:00', 30),
             (5, 5, 6, 1000.00, 100.00, '2024-01-16 10:50:00', 35),
             (6, 5, 9, 800.00, 80.00, '2024-01-16 11:30:00', 28),
             (7, 5, 11, 1200.00, 120.00, '2024-01-16 12:00:00', 32),
             (8, 5, 6, 1500.00, 150.00, '2024-01-16 14:00:00', 40),
-            
-            # Player 9 - also big losses on suspicious machines
             (9, 9, 6, 600.00, 60.00, '2024-01-17 09:00:00', 25),
             (10, 9, 9, 700.00, 70.00, '2024-01-17 10:00:00', 30),
             (11, 9, 11, 900.00, 90.00, '2024-01-17 11:00:00', 35),
-            
-            # More normal games
             (12, 2, 1, 80.00, 120.00, '2024-01-15 13:00:00', 50),
             (13, 2, 5, 300.00, 450.00, '2024-01-15 14:30:00', 70),
             (14, 3, 2, 60.00, 55.00, '2024-01-16 15:00:00', 40),
             (15, 3, 4, 75.00, 90.00, '2024-01-16 16:00:00', 45),
             (16, 4, 1, 50.00, 40.00, '2024-01-17 12:00:00', 35),
             (17, 4, 7, 100.00, 95.00, '2024-01-17 13:30:00', 48),
-            
-            # Late night suspicious activity
-            (18, 5, 6, 2000.00, 200.00, '2024-01-18 02:30:00', 20),  # 2:30 AM!
-            (19, 9, 9, 1800.00, 180.00, '2024-01-18 03:15:00', 22),  # 3:15 AM!
-            (20, 5, 11, 2500.00, 250.00, '2024-01-18 03:45:00', 25),  # 3:45 AM!
-            
-            # More games throughout the day
+            (18, 5, 6, 2000.00, 200.00, '2024-01-18 02:30:00', 20),
+            (19, 9, 9, 1800.00, 180.00, '2024-01-18 03:15:00', 22),
+            (20, 5, 11, 2500.00, 250.00, '2024-01-18 03:45:00', 25),
             (21, 6, 3, 250.00, 280.00, '2024-01-18 10:00:00', 55),
             (22, 6, 5, 400.00, 500.00, '2024-01-18 11:30:00', 65),
             (23, 7, 2, 120.00, 110.00, '2024-01-18 14:00:00', 42),
@@ -916,7 +902,6 @@ def create_casino_database():
         ]
         cursor.executemany('INSERT INTO games VALUES (?,?,?,?,?,?,?)', games_data)
         
-        # ========== EMPLOYEES TABLE ==========
         cursor.execute('''
         CREATE TABLE employees (
             employee_id INTEGER PRIMARY KEY,
@@ -933,16 +918,15 @@ def create_casino_database():
             (2, 'Sarah Chen', 'Security Chief', 'Level 4', 85000.00, '2019-06-20'),
             (3, 'Mike Stevens', 'Slot Technician', 'Level 2', 45000.00, '2022-01-10'),
             (4, 'Emily Rodriguez', 'Pit Boss', 'Level 3', 70000.00, '2021-08-05'),
-            (5, 'David Kim', 'IT Administrator', 'Level 5', 95000.00, '2023-02-14'),  # High access!
+            (5, 'David Kim', 'IT Administrator', 'Level 5', 95000.00, '2023-02-14'),
             (6, 'Lisa Anderson', 'Cashier', 'Level 1', 35000.00, '2023-04-20'),
-            (7, 'Robert Taylor', 'Slot Technician', 'Level 2', 48000.00, '2023-05-15'),  # Recent hire!
+            (7, 'Robert Taylor', 'Slot Technician', 'Level 2', 48000.00, '2023-05-15'),
             (8, 'Jennifer White', 'VIP Host', 'Level 2', 55000.00, '2021-11-30'),
             (9, 'Carlos Mendez', 'Maintenance', 'Level 2', 42000.00, '2022-09-10'),
             (10, 'Amanda Brooks', 'Surveillance', 'Level 3', 62000.00, '2020-07-25')
         ]
         cursor.executemany('INSERT INTO employees VALUES (?,?,?,?,?,?)', employees_data)
         
-        # ========== SUSPICIOUS EVENTS TABLE ==========
         cursor.execute('''
         CREATE TABLE suspicious_events (
             event_id INTEGER PRIMARY KEY,
@@ -957,12 +941,12 @@ def create_casino_database():
         ''')
         
         events_data = [
-            (1, 6, 7, 'Maintenance Access', '2024-01-14 23:45:00', 'Medium'),  # Night maintenance
-            (2, 6, 5, 'Software Update', '2024-01-15 01:30:00', 'High'),  # IT at night!
+            (1, 6, 7, 'Maintenance Access', '2024-01-14 23:45:00', 'Medium'),
+            (2, 6, 5, 'Software Update', '2024-01-15 01:30:00', 'High'),
             (3, 9, 7, 'Maintenance Access', '2024-01-15 23:30:00', 'Medium'),
-            (4, 9, 5, 'Software Update', '2024-01-16 02:00:00', 'High'),  # IT again at night!
+            (4, 9, 5, 'Software Update', '2024-01-16 02:00:00', 'High'),
             (5, 11, 7, 'Maintenance Access', '2024-01-16 23:15:00', 'Medium'),
-            (6, 11, 5, 'Software Update', '2024-01-17 01:45:00', 'High'),  # Pattern!
+            (6, 11, 5, 'Software Update', '2024-01-17 01:45:00', 'High'),
             (7, 6, None, 'Payout Error', '2024-01-18 10:30:00', 'Low'),
             (8, 9, None, 'Connection Lost', '2024-01-18 14:00:00', 'Low'),
             (9, 11, None, 'Payout Error', '2024-01-18 16:30:00', 'Low'),
@@ -972,7 +956,6 @@ def create_casino_database():
         
         conn.commit()
         print("✅ Casino database created successfully!")
-        print("📊 Tables created: slot_machines, players, games, employees, suspicious_events")
         return True
         
     except Exception as e:
@@ -982,9 +965,6 @@ def create_casino_database():
     finally:
         conn.close()
 
-
-# ==================== CASINO ROOM API ENDPOINTS ====================
-
 @app.route('/api/rooms/casino', methods=['GET'])
 def get_casino_room():
     """Get casino room information"""
@@ -993,126 +973,58 @@ def get_casino_room():
         "name": "Casino Heist",
         "description": "Hack into the casino's rigged system and expose the fraud",
         "stages": [
-            {
-                "stage_id": 1,
-                "title": "Stage 1: Rigged Machines",
-                "description": "Find slot machines with suspicious payout rates"
-            },
-            {
-                "stage_id": 2,
-                "title": "Stage 2: Victim Analysis", 
-                "description": "Identify players who lost unusually large amounts"
-            },
-            {
-                "stage_id": 3,
-                "title": "Stage 3: Night Shift",
-                "description": "Analyze suspicious late-night activity"
-            },
-            {
-                "stage_id": 4,
-                "title": "Stage 4: Inside Job",
-                "description": "Find connections between employees and rigged machines"
-            },
-            {
-                "stage_id": 5,
-                "title": "Stage 5: The Mastermind",
-                "description": "Expose the full conspiracy with all evidence"
-            }
+            {"stage_id": 1, "title": "Stage 1: Rigged Machines"},
+            {"stage_id": 2, "title": "Stage 2: Victim Analysis"},
+            {"stage_id": 3, "title": "Stage 3: Night Shift"},
+            {"stage_id": 4, "title": "Stage 4: Inside Job"},
+            {"stage_id": 5, "title": "Stage 5: The Mastermind"}
         ]
     }
     return jsonify(room_data)
 
-
 @app.route('/api/rooms/casino/stage/<int:stage_id>', methods=['GET'])
 def get_casino_stage(stage_id):
     """Get specific casino stage data"""
-    
     stages = {
         1: {
             "stage_id": 1,
             "title": "Rigged Machines",
-            "story": "You've infiltrated the casino's database. Intelligence suggests some slot machines have been rigged with abnormally low payout rates. Your first task: identify which machines are stealing from players.",
-            "description": "Find all slot machines with a payout percentage below 80%. These machines are likely rigged.",
-            "database_info": """TABLES AVAILABLE:
-slot_machines (machine_id, machine_name, location, payout_percentage, installed_date, status)
-
-HINT: Normal slot machines pay out 85-96% of bets. Anything below 80% is highly suspicious.""",
-            "hints": [
-                "You need to SELECT machines WHERE the payout_percentage is suspiciously low",
-                "Use the condition: payout_percentage < 80 to find rigged machines"
-            ],
-            "expected_columns": ["machine_id", "machine_name", "payout_percentage"],
-            "expected_row_count": 3
+            "story": "You've infiltrated the casino's database. Find machines with abnormally low payout rates.",
+            "description": "Find all slot machines with a payout percentage below 80%.",
+            "database_info": "slot_machines (machine_id, machine_name, location, payout_percentage, installed_date, status)",
+            "hints": ["Use WHERE payout_percentage < 80"]
         },
         2: {
             "stage_id": 2,
             "title": "Victim Analysis",
-            "story": "You've found the rigged machines. Now you need to identify the victims - players who deposited far more than they withdrew. These are the people being scammed.",
-            "description": "Find players who have lost more than $50,000 (where total_deposited minus total_withdrawn is greater than 50000).",
-            "database_info": """TABLES AVAILABLE:
-players (player_id, username, email, vip_level, registration_date, total_deposited, total_withdrawn)
-
-CALCULATION: Loss = total_deposited - total_withdrawn""",
-            "hints": [
-                "Calculate the loss for each player: (total_deposited - total_withdrawn)",
-                "You can use this calculation directly in WHERE: WHERE (total_deposited - total_withdrawn) > 50000"
-            ],
-            "expected_columns": ["player_id", "username", "total_deposited", "total_withdrawn"],
-            "expected_row_count": 3
+            "story": "Find players who lost more than $50,000.",
+            "description": "Find players where (total_deposited - total_withdrawn) > 50000.",
+            "database_info": "players (player_id, username, email, vip_level, registration_date, total_deposited, total_withdrawn)",
+            "hints": ["Calculate: total_deposited - total_withdrawn > 50000"]
         },
         3: {
             "stage_id": 3,
             "title": "Night Shift Mystery",
-            "story": "The scam runs deeper. You've noticed unusual gaming activity during late-night hours (2 AM - 4 AM). Someone is playing the rigged machines when the casino is nearly empty. This can't be a coincidence.",
-            "description": "Find all games played between 2 AM and 4 AM (hours 02 and 03). Use the game_timestamp field.",
-            "database_info": """TABLES AVAILABLE:
-games (game_id, player_id, machine_id, bet_amount, payout_amount, game_timestamp, duration_seconds)
-
-TIME FORMAT: game_timestamp is stored as 'YYYY-MM-DD HH:MM:SS'
-EXAMPLE: '2024-01-18 02:30:00' means 2:30 AM""",
-            "hints": [
-                "Use strftime() to extract the hour from game_timestamp: strftime('%H', game_timestamp)",
-                "The hours '02' and '03' represent 2 AM to 3:59 AM. Use: WHERE strftime('%H', game_timestamp) IN ('02', '03')"
-            ],
-            "expected_columns": ["game_id", "player_id", "machine_id", "game_timestamp"],
-            "expected_row_count": 3
+            "story": "Find games played between 2 AM and 4 AM.",
+            "description": "Find all games where the hour is 02 or 03.",
+            "database_info": "games (game_id, player_id, machine_id, bet_amount, payout_amount, game_timestamp, duration_seconds)",
+            "hints": ["Use strftime('%H', game_timestamp) IN ('02', '03')"]
         },
         4: {
             "stage_id": 4,
             "title": "Inside Job",
-            "story": "Your investigation reveals a pattern: every rigged machine was accessed by the same IT employee before players started losing big. This is an inside job. You need to connect the dots.",
-            "description": "Find all suspicious events involving employee_id 5 (the IT Administrator) on machines 6, 9, or 11 with 'High' severity.",
-            "database_info": """TABLES AVAILABLE:
-suspicious_events (event_id, machine_id, employee_id, event_type, event_timestamp, severity)
-employees (employee_id, name, position, access_level, salary, hire_date)
-
-JOIN them to get employee details!""",
-            "hints": [
-                "You need to JOIN suspicious_events with employees to get the employee name",
-                "Filter by: employee_id = 5 AND severity = 'High' AND machine_id IN (6, 9, 11)"
-            ],
-            "expected_columns": ["event_id", "machine_id", "event_type", "name"],
-            "expected_row_count": 3
+            "story": "Connect employee_id 5 to rigged machines.",
+            "description": "Find suspicious events by employee 5 on machines 6, 9, or 11 with High severity.",
+            "database_info": "suspicious_events, employees",
+            "hints": ["JOIN tables and filter by employee_id = 5"]
         },
         5: {
             "stage_id": 5,
             "title": "The Full Picture",
-            "story": "You have all the pieces. Now expose the complete fraud: Find how much money was stolen from each victim on the rigged machines. This is the evidence that will bring down the operation.",
-            "description": "Calculate total losses per player on machines 6, 9, and 11. Show player username, machine name, and total loss (bet_amount - payout_amount).",
-            "database_info": """TABLES AVAILABLE:
-games (game_id, player_id, machine_id, bet_amount, payout_amount, game_timestamp, duration_seconds)
-players (player_id, username, email, vip_level, registration_date, total_deposited, total_withdrawn)
-slot_machines (machine_id, machine_name, location, payout_percentage, installed_date, status)
-
-You need to JOIN all three tables and use GROUP BY with SUM!""",
-            "hints": [
-                "JOIN games with players and slot_machines",
-                "Calculate loss: SUM(bet_amount - payout_amount)",
-                "GROUP BY player and machine, and filter for machine_id IN (6, 9, 11)",
-                "The full query structure: SELECT ... FROM games JOIN players ... JOIN slot_machines ... WHERE machine_id IN (...) GROUP BY ..."
-            ],
-            "expected_columns": ["username", "machine_name"],
-            "expected_row_count": 6  # 2 players × 3 machines
+            "story": "Calculate total losses per player on rigged machines.",
+            "description": "Show username, machine name, and SUM(bet_amount - payout_amount).",
+            "database_info": "games, players, slot_machines",
+            "hints": ["JOIN all three tables, filter machine_id IN (6,9,11), GROUP BY"]
         }
     }
     
@@ -1121,30 +1033,23 @@ You need to JOIN all three tables and use GROUP BY with SUM!""",
     
     return jsonify(stages[stage_id])
 
-
 @app.route('/api/execute-sql/casino', methods=['POST'])
 def execute_casino_sql():
     """Execute SQL query on casino database"""
     data = request.json
     query = data.get('query', '').strip()
     
-    if not query:
-        return jsonify({"success": False, "error": "No query provided"})
-    
-    # Security check
-    dangerous_keywords = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'TRUNCATE']
-    if any(keyword in query.upper() for keyword in dangerous_keywords):
-        return jsonify({"success": False, "error": "Only SELECT queries are allowed"})
+    if not query or not query.upper().startswith('SELECT'):
+        return jsonify({"success": False, "error": "Only SELECT queries allowed"})
     
     try:
-        conn = sqlite3.connect('casino.db')
+        conn = sqlite3.connect('database/casino.db')
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
         cursor.execute(query)
         rows = cursor.fetchall()
         
-        # Convert to list of dicts
         columns = [description[0] for description in cursor.description] if cursor.description else []
         data = [dict(row) for row in rows]
         
@@ -1154,15 +1059,12 @@ def execute_casino_sql():
             "success": True,
             "data": data,
             "columns": columns,
-            "row_count": len(data)
+            "row_count": len(data),
+            "query": query
         })
         
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        })
-
+        return jsonify({"success": False, "error": str(e)})
 
 @app.route('/api/validate-query/casino/<int:stage_id>', methods=['POST'])
 def validate_casino_query(stage_id):
@@ -1172,33 +1074,11 @@ def validate_casino_query(stage_id):
     row_count = data.get('row_count', 0)
     
     validations = {
-        1: {
-            "expected_count": 3,
-            "check": lambda r: all('payout_percentage' in row and row['payout_percentage'] < 80 for row in r),
-            "message": "Make sure you're finding machines with payout_percentage below 80%"
-        },
-        2: {
-            "expected_count": 3,
-            "check": lambda r: all('total_deposited' in row and 'total_withdrawn' in row 
-                                  and (row['total_deposited'] - row['total_withdrawn']) > 50000 for row in r),
-            "message": "Find players who lost more than $50,000 (deposited - withdrawn > 50000)"
-        },
-        3: {
-            "expected_count": 3,
-            "check": lambda r: all('game_timestamp' in row and 
-                                  ('02:' in row['game_timestamp'] or '03:' in row['game_timestamp']) for row in r),
-            "message": "Find games played between 2 AM and 4 AM (hours 02 and 03)"
-        },
-        4: {
-            "expected_count": 3,
-            "check": lambda r: all('employee_id' in row or 'name' in row for row in r) and row_count == 3,
-            "message": "Find suspicious events by employee_id 5 with severity 'High' on machines 6, 9, or 11"
-        },
-        5: {
-            "expected_count": 6,
-            "check": lambda r: 'username' in (r[0] if r else {}) and 'machine_name' in (r[0] if r else {}),
-            "message": "Join all tables and calculate total losses per player per rigged machine"
-        }
+        1: {"expected_count": 3, "message": "Find machines with payout < 80%"},
+        2: {"expected_count": 3, "message": "Find players who lost > $50,000"},
+        3: {"expected_count": 3, "message": "Find games at 2-4 AM"},
+        4: {"expected_count": 3, "message": "Find employee 5's high severity events"},
+        5: {"expected_count": 6, "message": "Calculate losses on rigged machines"}
     }
     
     if stage_id not in validations:
@@ -1206,33 +1086,98 @@ def validate_casino_query(stage_id):
     
     validation = validations[stage_id]
     
-    # Check row count
     if row_count != validation["expected_count"]:
         return jsonify({
             "valid": False,
-            "message": f"Expected {validation['expected_count']} rows, got {row_count}. {validation['message']}"
+            "message": f"Expected {validation['expected_count']} rows. {validation['message']}"
         })
     
-    # Check data validity
-    if not validation["check"](results):
+    return jsonify({"valid": True, "message": "Correct!"})
+
+# ==================== AI HINT SYSTEM ====================
+
+@app.route('/api/ai-hint/<room_id>/<int:stage_id>', methods=['POST'])
+def get_ai_hint(room_id, stage_id):
+    """Generate AI hint for current stage using Gemini"""
+    if not GEMINI_API_KEY:
         return jsonify({
-            "valid": False,
-            "message": validation["message"]
-        })
+            'error': 'AI hints are temporarily unavailable. Try the regular hints!'
+        }), 503
     
-    return jsonify({"valid": True, "message": "Correct! Moving to next stage..."})
+    try:
+        data = request.json
+        last_query = data.get('last_query', 'No query attempted yet')
+        error = data.get('error', 'No error')
+        
+        # Get stage data based on room
+        if room_id == 'football':
+            if room_id not in ROOM_DATA:
+                return jsonify({'error': 'Room not found'}), 404
+            
+            stage = next((s for s in ROOM_DATA[room_id]['stages'] if s['id'] == stage_id), None)
+            if not stage:
+                return jsonify({'error': 'Stage not found'}), 404
+            
+            challenge = stage['description']
+            db_info = stage['database_info']
+            
+        elif room_id == 'casino':
+            # Get casino stage
+            stage_response = get_casino_stage(stage_id)
+            if isinstance(stage_response, tuple) and stage_response[1] == 404:
+                return jsonify({'error': 'Stage not found'}), 404
+            
+            if isinstance(stage_response, tuple):
+                stage = stage_response[0].get_json()
+            else:
+                stage = stage_response.get_json()
+            
+            challenge = stage['description']
+            db_info = stage['database_info']
+        else:
+            return jsonify({'error': 'Room not found'}), 404
+        
+        # Build the prompt for Gemini
+        prompt = f"""You are a helpful SQL tutor. A student is working on this challenge:
 
+Challenge: {challenge}
 
-# ==================== INITIALIZATION ====================
+Database Schema:
+{db_info}
 
-def initialize_casino():
-    """Initialize casino database"""
+The student's last query: {last_query}
+Error/Issue: {error}
+
+Give a SHORT, helpful hint (1-2 sentences max) to guide them toward the solution.
+Don't give the full answer - just a gentle nudge in the right direction.
+Be encouraging and educational. Focus on SQL concepts."""
+
+        # Call Gemini API
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        response = model.generate_content(prompt)
+        
+        hint = response.text
+        
+        return jsonify({
+            'hint': hint,
+            'cost': 30  # 30 points penalty
+        })
+        
+    except Exception as e:
+        print(f"❌ AI Hint Error: {str(e)}")
+        return jsonify({
+            'error': 'Failed to generate AI hint. Please try the regular hints instead.',
+            'details': str(e)
+        }), 500
+
+def initialize_app():
+    """Initialize database and sample data"""
     with app.app_context():
+        db.create_all()
+        print("✅ Main database tables created!")
+        create_sample_database()
+        create_football_database()
         create_casino_database()
-
-
-# הוסף את זה לפונקציית initialize_app הקיימת:
-# initialize_casino()
 
 if __name__ == '__main__':
     print("🚀 Starting SQL Quest Backend...")

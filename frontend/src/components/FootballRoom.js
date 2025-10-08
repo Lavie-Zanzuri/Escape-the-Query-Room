@@ -24,6 +24,13 @@ const FootballRoom = ({ onBack }) => {
   const MAX_HINTS_PER_STAGE = 2;
   const MAX_HINTS_TOTAL = 3;
 
+  // AI Hint states - NEW!
+  const [aiHint, setAiHint] = useState(null);
+  const [aiHintsUsed, setAiHintsUsed] = useState(0);
+  const [lastQuery, setLastQuery] = useState('');
+  const [isLoadingAiHint, setIsLoadingAiHint] = useState(false);
+  const MAX_AI_HINTS = 1;
+
   const goalSound = new Audio('/audio/goooooaall.mp3');
 
   useEffect(() => {
@@ -78,6 +85,9 @@ const FootballRoom = ({ onBack }) => {
 
   const handleQuerySuccess = async (result) => {
     if (result.success && result.row_count > 0 && !stageComplete) {
+      // Save last query - NEW!
+      setLastQuery(result.query || '');
+      
       try {
         const response = await fetch(`http://localhost:5000/api/validate-query/football/${currentStage}`, {
           method: 'POST',
@@ -168,6 +178,43 @@ const FootballRoom = ({ onBack }) => {
            currentHintIndex < stageData.hints.length - 1;
   };
 
+  // AI Hint function - NEW!
+  const getAiHint = async () => {
+    if (aiHintsUsed >= MAX_AI_HINTS) {
+      setValidationError(`⚠️ You can only use ${MAX_AI_HINTS} AI hint per game!`);
+      return;
+    }
+
+    setIsLoadingAiHint(true);
+    setValidationError(null);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/ai-hint/football/${currentStage}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          last_query: lastQuery,
+          error: validationError || 'No error'
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setAiHint(data.hint);
+        setAiHintsUsed(prev => prev + 1);
+        setTotalScore(prev => Math.max(0, prev - data.cost));
+      } else {
+        setValidationError(data.error || 'Failed to get AI hint. Try the regular hints!');
+      }
+    } catch (error) {
+      console.error('AI Hint error:', error);
+      setValidationError('Could not connect to AI service. Try the regular hints instead!');
+    } finally {
+      setIsLoadingAiHint(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-900 via-green-800 to-emerald-900">
@@ -234,8 +281,6 @@ const FootballRoom = ({ onBack }) => {
           background: 'radial-gradient(ellipse at top, rgba(255,255,255,0.4) 0%, transparent 70%)'
         }} />
       </div>
-
-
 
       <div className="relative z-10 p-6 max-w-7xl mx-auto pt-24">
         {/* STADIUM SCOREBOARD HEADER */}
@@ -404,12 +449,11 @@ const FootballRoom = ({ onBack }) => {
                 </div>
               </div>
 
-
-
-              {/* Hints Section */}
+              {/* Hints Section - WITH AI HINT! */}
               <div className="backdrop-blur-2xl bg-gradient-to-br from-amber-900/80 to-orange-900/80 border-2 border-amber-400/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden hover:scale-[1.02] transition-transform">
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 to-transparent animate-pulse" />
-                <div className="relative">
+                <div className="relative space-y-4">
+                  {/* Regular Hint Button */}
                   <button
                     onClick={showNextHint}
                     disabled={!canUseHint()}
@@ -427,7 +471,36 @@ const FootballRoom = ({ onBack }) => {
                       {totalHintsUsed}/{MAX_HINTS_TOTAL} total game hints used
                     </div>
                   </button>
+
+                  {/* AI Hint Button - NEW! */}
+                  <button
+                    onClick={getAiHint}
+                    disabled={aiHintsUsed >= MAX_AI_HINTS || isLoadingAiHint}
+                    className={`w-full font-black text-lg py-5 px-8 rounded-2xl transition-all transform shadow-2xl ${
+                      aiHintsUsed >= MAX_AI_HINTS || isLoadingAiHint
+                        ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 hover:scale-105 text-white'
+                    }`}
+                    style={{
+                      boxShadow: aiHintsUsed < MAX_AI_HINTS && !isLoadingAiHint ? '0 0 30px rgba(168, 85, 247, 0.6)' : 'none'
+                    }}
+                  >
+                    {isLoadingAiHint ? (
+                      <>
+                        <span className="inline-block animate-spin mr-2">⚙️</span>
+                        AI THINKING...
+                      </>
+                    ) : (
+                      <>
+                        🤖 AI HINT ({aiHintsUsed}/{MAX_AI_HINTS} used)
+                        <div className="text-xs mt-1">
+                          Powered by Gemini • -30 pts
+                        </div>
+                      </>
+                    )}
+                  </button>
                   
+                  {/* Show Regular Hint */}
                   {showHint && currentHintIndex >= 0 && (
                     <div className="mt-6 bg-yellow-400/20 border-2 border-yellow-400/60 rounded-2xl p-6 animate-fadeIn shadow-xl" style={{
                       boxShadow: '0 0 20px rgba(250, 204, 21, 0.3)'
@@ -435,6 +508,21 @@ const FootballRoom = ({ onBack }) => {
                       <div className="flex items-start gap-4">
                         <span className="text-4xl">💡</span>
                         <p className="text-yellow-50 text-lg leading-relaxed flex-1 font-semibold">{stageData.hints[currentHintIndex]}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show AI Hint - NEW! */}
+                  {aiHint && (
+                    <div className="mt-6 bg-gradient-to-br from-blue-900/40 to-purple-900/40 border-2 border-purple-400/60 rounded-2xl p-6 animate-fadeIn shadow-xl" style={{
+                      boxShadow: '0 0 20px rgba(168, 85, 247, 0.4)'
+                    }}>
+                      <div className="flex items-start gap-4">
+                        <span className="text-4xl">🤖</span>
+                        <div className="flex-1">
+                          <div className="text-purple-300 text-xs font-bold uppercase mb-2">AI-Powered Hint</div>
+                          <p className="text-purple-50 text-lg leading-relaxed font-semibold">{aiHint}</p>
+                        </div>
                       </div>
                     </div>
                   )}
