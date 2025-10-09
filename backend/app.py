@@ -210,22 +210,23 @@ ROOM_DATA = {
             },
             {
                 'id': 2,
-                'title': 'Oxygen Anomalies',
-                'description': 'List the modules where oxygen_level is under 75, lowest value first.',
-                'story': 'Any module under 75% oxygen is unsafe—highlight the worst readings so the life-support team can respond.',
-                'database_info': '''Remember:
-🛰️ modules holds environmental stats for every compartment.
-Look for oxygen_level values below the safe 75% threshold.''',
-                'target_query': 'SELECT module_name, oxygen_level FROM modules WHERE oxygen_level < 75 ORDER BY oxygen_level ASC',
-                'expected_columns': ['module_name', 'oxygen_level'],
+                'title': 'Sensor Sweep',
+                'description': 'List modules that have sensors in Warning or Critical state, showing type and reading.',
+                'story': 'Telemetry noise is spiking. Pull every urgent sensor reading so we can triage the hot spots.',
+                'database_info': '''Useful Tables:
+🛰️ modules — identifies each compartment
+📡 sensor_readings — live metrics with status levels
+Look for sensor statuses Warning or Critical.''',
+                'target_query': 'SELECT m.module_name, s.sensor_type, s.value, s.status FROM modules m JOIN sensor_readings s ON m.module_id = s.module_id WHERE s.status IN ("Warning", "Critical") ORDER BY CASE s.status WHEN "Critical" THEN 1 ELSE 2 END, s.value DESC',
+                'expected_columns': ['module_name', 'sensor_type', 'value', 'status'],
                 'validation': {
-                    'max_safe_level': 75,
-                    'expected_count': 3
+                    'allowed_statuses': ['Critical', 'Warning'],
+                    'expected_count': 4
                 },
                 'hints': [
-                    'Filter the modules table using a WHERE clause on oxygen_level.',
-                    'Compare oxygen_level against the 75 threshold.',
-                    'Sort ascending so the worst readings appear first.'
+                    'JOIN modules with sensor_readings on module_id.',
+                    'Use WHERE status IN ("Warning", "Critical") to keep urgent readings.',
+                    'Order the results so Critical readings come first.'
                 ]
             },
             {
@@ -253,23 +254,22 @@ Find them in modules flagged as Critical.''',
             },
             {
                 'id': 4,
-                'title': 'Critical Alerts Board',
-                'description': 'Show active critical alerts with module names and the time they were detected.',
-                'story': 'Command wants the current alarm list in one table—module, alert, and timestamp.',
-                'database_info': '''Tip:
-🚨 system_alerts stores each alarm. Look for severity = "Critical" and status = "Active".
-Join to modules to translate module_id into a human-readable name.''',
-                'target_query': 'SELECT a.alert_id, m.module_name, a.alert_type, a.detected_at FROM system_alerts a JOIN modules m ON a.module_id = m.module_id WHERE a.status = "Active" AND a.severity = "Critical" ORDER BY a.detected_at',
-                'expected_columns': ['alert_id', 'module_name', 'alert_type', 'detected_at'],
+                'title': 'Alert Loadout',
+                'description': 'Count how many active alerts each module still has, highest totals first.',
+                'story': 'Mission control wants a leaderboard of which modules are still screaming for help.',
+                'database_info': '''Remember:
+🚨 system_alerts records every alarm with status and module_id.
+Group by module to total how many active alerts remain.''',
+                'target_query': 'SELECT m.module_name, COUNT(*) AS active_alerts FROM system_alerts a JOIN modules m ON a.module_id = m.module_id WHERE a.status = "Active" GROUP BY m.module_name HAVING COUNT(*) >= 1 ORDER BY active_alerts DESC, m.module_name',
+                'expected_columns': ['module_name', 'active_alerts'],
                 'validation': {
-                    'expected_count': 2,
-                    'required_status': 'Active',
-                    'required_severity': 'Critical'
+                    'expected_modules': ['Aegis Control', 'Helios Reactor', 'Luna Greenhouse'],
+                    'min_count': 1
                 },
                 'hints': [
-                    'Join system_alerts with modules so you can show which area is affected.',
-                    'Filter by both status and severity to isolate critical emergencies.',
-                    'Order by detected_at to see the timeline of failures.'
+                    'JOIN system_alerts with modules to turn module_id into a name.',
+                    'Filter to active alerts before you group.',
+                    'Use COUNT(*) and HAVING to keep modules that still have alerts.'
                 ]
             },
             {
@@ -707,24 +707,30 @@ def validate_space_stage(stage, results, row_count):
         }
 
     if stage == 2:
-        expected_count = 3
+        expected_count = 4
         if row_count != expected_count:
             return {
                 'valid': False,
-                'message': 'There should be exactly three modules under the oxygen threshold. Verify your WHERE filter and ordering.'
+                'message': 'Mission control expects four urgent sensor readings. Double-check your JOIN and filters.'
             }
 
         for row in results:
-            oxygen = row.get('oxygen_level')
-            if oxygen is None or float(oxygen) >= 75:
+            status = row.get('status')
+            if status not in {'Critical', 'Warning'}:
                 return {
                     'valid': False,
-                    'message': 'One of the returned modules is not below 75% oxygen. Tighten the oxygen_level condition.'
+                    'message': 'Only Warning or Critical sensor statuses should appear. Update your WHERE clause.'
+                }
+
+            if 'module_name' not in row or 'sensor_type' not in row:
+                return {
+                    'valid': False,
+                    'message': 'Missing module or sensor details. Make sure you JOIN modules with sensor_readings.'
                 }
 
         return {
             'valid': True,
-            'message': 'Oxygen anomalies identified. Life-support teams are moving to seal those modules.'
+            'message': 'Sensor sweep complete. All Warning and Critical readings are on the console.'
         }
 
     if stage == 3:
@@ -743,23 +749,31 @@ def validate_space_stage(stage, results, row_count):
         }
 
     if stage == 4:
-        expected_alerts = {'Helios Reactor', 'Luna Greenhouse'}
-        if row_count != len(expected_alerts):
+        if row_count == 0:
             return {
                 'valid': False,
-                'message': 'Mission control still sees two active critical alarms. Make sure you are filtering by severity and status.'
+                'message': 'Your report shows zero active alerts, but command knows there are still alarms. Check your WHERE and HAVING clauses.'
             }
 
+        expected_modules = {'Aegis Control', 'Helios Reactor', 'Luna Greenhouse'}
         modules = {row.get('module_name') for row in results}
-        if modules != expected_alerts:
+        if modules != expected_modules:
             return {
                 'valid': False,
-                'message': 'One of the alerts you reported is not critical or not active. Re-run the diagnostics filter.'
+                'message': 'One or more modules with active alerts are missing. Make sure you group all active alerts by module.'
             }
+
+        for row in results:
+            alerts = row.get('active_alerts')
+            if alerts is None or int(alerts) < 1:
+                return {
+                    'valid': False,
+                    'message': 'Every module listed should have at least one active alert. Verify your COUNT and HAVING logic.'
+                }
 
         return {
             'valid': True,
-            'message': 'Critical alerts board synced. Command has eyes on every unresolved emergency.'
+            'message': 'Alert loadout compiled. Command can see which modules are juggling active alarms.'
         }
 
     if stage == 5:

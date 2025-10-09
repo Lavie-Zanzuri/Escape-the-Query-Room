@@ -197,10 +197,20 @@ const SpaceStationRoom = ({ onBack }) => {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-black">
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="fixed inset-0 w-full h-full object-cover pointer-events-none z-0"
+      >
+        <source src="/videos/Generated%20File%20October%2009,%202025%20-%205_08PM.mp4" type="video/mp4" />
+      </video>
+
       {/* COSMIC BACKGROUND */}
-      <div className="fixed inset-0 bg-gradient-to-br from-indigo-950 via-black to-slate-900 opacity-90" />
-      <div className="fixed inset-0 pointer-events-none" id="stars-layer" />
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.2),transparent_55%)] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-indigo-950 via-black to-slate-900 opacity-20 z-0" />
+      <div className="fixed inset-0 pointer-events-none z-0" id="stars-layer" />
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_55%)] pointer-events-none z-0" />
 
       <div className="relative z-10 p-6 max-w-7xl mx-auto pt-24">
         {/* MISSION HEADER */}

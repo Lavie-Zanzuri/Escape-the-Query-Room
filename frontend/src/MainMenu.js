@@ -34,6 +34,17 @@ const pulse = keyframes`
   50% { transform: scale(1.05); }
 `;
 
+const VideoBackground = styled.video`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -3;
+  filter: brightness(0.22);
+`;
+
 const MatrixBackground = styled.div`
   position: fixed;
   top: 0;
@@ -228,6 +239,9 @@ function MainMenu({ onSelectRoom }) {
   return (
     <>
       <GlobalStyle />
+      <VideoBackground autoPlay muted loop playsInline preload="auto">
+        <source src="/videos/Generated%20File%20October%2009,%202025%20-%205_08PM.mp4" type="video/mp4" />
+      </VideoBackground>
       <MatrixBackground />
       <MenuContainer>
         <TerminalHeader>
