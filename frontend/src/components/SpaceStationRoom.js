@@ -22,6 +22,12 @@ const SpaceStationRoom = ({ onBack }) => {
   const MAX_HINTS_PER_STAGE = 2;
   const MAX_HINTS_TOTAL = 3;
 
+  const [aiHint, setAiHint] = useState(null);
+  const [aiHintsUsed, setAiHintsUsed] = useState(0);
+  const [lastQuery, setLastQuery] = useState('');
+  const [isLoadingAiHint, setIsLoadingAiHint] = useState(false);
+  const MAX_AI_HINTS = 1;
+
   const missionSuccessSound = new Audio('/audio/jackpot.mp3');
 
   useEffect(() => {
@@ -66,6 +72,7 @@ const SpaceStationRoom = ({ onBack }) => {
       setCurrentHintIndex(-1);
       setHintsUsedInStage(0);
       setValidationError(null);
+      setAiHint(null);
 
       setStageStartTime(Date.now());
       setStageElapsedTime(0);
@@ -76,6 +83,7 @@ const SpaceStationRoom = ({ onBack }) => {
 
   const handleQuerySuccess = async (result) => {
     if (result.success && result.row_count > 0 && !stageComplete) {
+      setLastQuery(result.query || '');
       try {
         const response = await fetch(`http://localhost:5000/api/validate-query/space/${currentStage}`, {
           method: 'POST',
@@ -164,6 +172,44 @@ const SpaceStationRoom = ({ onBack }) => {
            totalHintsUsed < MAX_HINTS_TOTAL &&
            stageData &&
            currentHintIndex < stageData.hints.length - 1;
+  };
+
+  const getAiHint = async () => {
+    if (aiHintsUsed >= MAX_AI_HINTS) {
+      setValidationError(`⚠️ You can only use ${MAX_AI_HINTS} AI hint per game!`);
+      return;
+    }
+
+    setIsLoadingAiHint(true);
+    setValidationError(null);
+
+    const allStageHints = stageData?.hints || [];
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/ai-hint/space/${currentStage}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          last_query: lastQuery,
+          error: validationError || 'No error',
+          existing_hints: allStageHints
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.hint) {
+        setAiHint(data.hint);
+        setAiHintsUsed(prev => prev + 1);
+      } else if (data.error) {
+        setValidationError(data.error);
+      }
+    } catch (error) {
+      console.error('AI hint error:', error);
+      setValidationError('Error generating AI hint. Please try again later.');
+    } finally {
+      setIsLoadingAiHint(false);
+    }
   };
 
   const totalMissionSeconds = stageTimes.reduce((sum, entry) => sum + entry.time, 0) + (stageComplete ? 0 : stageElapsedTime);
@@ -383,19 +429,48 @@ const SpaceStationRoom = ({ onBack }) => {
                     </div>
                   </button>
 
-                  {showHint && currentHintIndex >= 0 && (
-                    <div className="mt-6 bg-purple-500/20 border-2 border-purple-400/60 rounded-2xl p-6 animate-fadeIn shadow-xl" style={{
-                      boxShadow: '0 0 20px rgba(192, 132, 252, 0.3)'
-                    }}>
-                      <div className="flex items-start gap-4">
-                        <span className="text-4xl">🧠</span>
-                        <p className="text-purple-50 text-lg leading-relaxed flex-1 font-semibold">{stageData.hints[currentHintIndex]}</p>
-                      </div>
+                {showHint && currentHintIndex >= 0 && (
+                  <div className="mt-6 bg-purple-500/20 border-2 border-purple-400/60 rounded-2xl p-6 animate-fadeIn shadow-xl" style={{
+                    boxShadow: '0 0 20px rgba(192, 132, 252, 0.3)'
+                  }}>
+                    <div className="flex items-start gap-4">
+                      <span className="text-4xl">🧠</span>
+                      <p className="text-purple-50 text-lg leading-relaxed flex-1 font-semibold">{stageData.hints[currentHintIndex]}</p>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={getAiHint}
+                  disabled={aiHintsUsed >= MAX_AI_HINTS || isLoadingAiHint}
+                  className={`w-full mt-6 font-black text-lg py-5 px-8 rounded-2xl transition-all transform shadow-2xl ${
+                    aiHintsUsed < MAX_AI_HINTS && !isLoadingAiHint
+                      ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 hover:scale-105 text-white'
+                      : 'bg-gradient-to-r from-gray-700 to-gray-800 text-gray-500 cursor-not-allowed'
+                  }`}
+                  style={{
+                    boxShadow: aiHintsUsed < MAX_AI_HINTS && !isLoadingAiHint ? '0 0 30px rgba(129, 140, 248, 0.6)' : 'none'
+                  }}
+                >
+                  {isLoadingAiHint ? '🤖 Requesting AI hint…' : `🤖 AI STRATEGIC HINT (${aiHintsUsed}/${MAX_AI_HINTS} used)`}
+                  <div className="text-xs mt-1">
+                    Uses remaining this game: {MAX_AI_HINTS - aiHintsUsed}
+                  </div>
+                </button>
+
+                {aiHint && (
+                  <div className="mt-6 bg-indigo-500/20 border-2 border-indigo-400/60 rounded-2xl p-6 animate-fadeIn shadow-xl" style={{
+                    boxShadow: '0 0 20px rgba(129, 140, 248, 0.3)'
+                  }}>
+                    <div className="flex items-start gap-4">
+                      <span className="text-4xl">🤖</span>
+                      <p className="text-indigo-50 text-lg leading-relaxed flex-1 font-semibold">{aiHint}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
+          </div>
 
             {/* SQL Editor Section - 3 columns */}
             <div className="lg:col-span-3">

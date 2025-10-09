@@ -210,29 +210,28 @@ ROOM_DATA = {
             },
             {
                 'id': 2,
-                'title': 'Sensor Sweep',
-                'description': 'List modules that have sensors in Warning or Critical state, showing type and reading.',
-                'story': 'Telemetry noise is spiking. Pull every urgent sensor reading so we can triage the hot spots.',
-                'database_info': '''Useful Tables:
-🛰️ modules — identifies each compartment
-📡 sensor_readings — live metrics with status levels
-Look for sensor statuses Warning or Critical.''',
-                'target_query': 'SELECT m.module_name, s.sensor_type, s.value, s.status FROM modules m JOIN sensor_readings s ON m.module_id = s.module_id WHERE s.status IN ("Warning", "Critical") ORDER BY CASE s.status WHEN "Critical" THEN 1 ELSE 2 END, s.value DESC',
-                'expected_columns': ['module_name', 'sensor_type', 'value', 'status'],
+                'title': 'Oxygen Watch',
+                'description': 'List every module with oxygen_level below 80, worst values first.',
+                'story': 'Life support wants eyes on any compartment creeping toward the danger zone.',
+                'database_info': '''Helpful tables:
+🛰️ modules — contains oxygen_level for each compartment
+Focus on rows below the 80% safety margin.''',
+                'target_query': 'SELECT module_name, oxygen_level FROM modules WHERE oxygen_level < 80 ORDER BY oxygen_level ASC',
+                'expected_columns': ['module_name', 'oxygen_level'],
                 'validation': {
-                    'allowed_statuses': ['Critical', 'Warning'],
+                    'max_level': 80,
                     'expected_count': 4
                 },
                 'hints': [
-                    'JOIN modules with sensor_readings on module_id.',
-                    'Use WHERE status IN ("Warning", "Critical") to keep urgent readings.',
-                    'Order the results so Critical readings come first.'
+                    'Filter the modules table by using WHERE oxygen_level < 80.',
+                    'Sort by oxygen_level ascending so the lowest values appear first.',
+                    'Select only the module name and oxygen level for the report.'
                 ]
             },
             {
                 'id': 3,
                 'title': 'Crew Deployment',
-                'description': 'Find on-duty crew members (clearance >= 4) who are assigned to critical modules.',
+                'description': 'Find on-duty crew members with clearance >= 4 assigned to critical modules.',
                 'story': 'We only have a couple of specialists inside the danger zones—verify exactly who is already in place.',
                 'database_info': '''Need-to-know:
 🧑‍🚀 crew_members links each astronaut to a module via assigned_module_id.
@@ -711,26 +710,20 @@ def validate_space_stage(stage, results, row_count):
         if row_count != expected_count:
             return {
                 'valid': False,
-                'message': 'Mission control expects four urgent sensor readings. Double-check your JOIN and filters.'
+                'message': 'Mission control expects four modules below the 80% oxygen threshold. Double-check your filter.'
             }
 
         for row in results:
-            status = row.get('status')
-            if status not in {'Critical', 'Warning'}:
+            oxygen = row.get('oxygen_level')
+            if oxygen is None or float(oxygen) >= 80:
                 return {
                     'valid': False,
-                    'message': 'Only Warning or Critical sensor statuses should appear. Update your WHERE clause.'
-                }
-
-            if 'module_name' not in row or 'sensor_type' not in row:
-                return {
-                    'valid': False,
-                    'message': 'Missing module or sensor details. Make sure you JOIN modules with sensor_readings.'
+                    'message': 'One of the modules you reported is above the safety cutoff. Tighten your WHERE clause.'
                 }
 
         return {
             'valid': True,
-            'message': 'Sensor sweep complete. All Warning and Critical readings are on the console.'
+            'message': 'Oxygen watch list ready. Life support sees every module dipping under 80%.'
         }
 
     if stage == 3:
