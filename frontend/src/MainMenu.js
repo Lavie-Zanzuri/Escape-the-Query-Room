@@ -266,27 +266,15 @@ function MainMenu({ onSelectRoom }) {
             </RoomMeta>
           </RoomCard>
 
-          <RoomCard className="coming-soon">
-            <StatusBadge style={{borderColor: '#666', color: '#666', background: 'rgba(102,102,102,0.2)'}}>LOCKED</StatusBadge>
-            <RoomIcon>🎭</RoomIcon>
-            <RoomTitle>Museum Mystery</RoomTitle>
-            <RoomDescription>
-              Solve the art theft by querying the museum's artifact database. Uncover stolen pieces and identify the culprit.
-            </RoomDescription>
-            <RoomMeta style={{color: '#666'}}>
-              COMING SOON
-            </RoomMeta>
-          </RoomCard>
-
-          <RoomCard className="coming-soon">
-            <StatusBadge style={{borderColor: '#666', color: '#666', background: 'rgba(102,102,102,0.2)'}}>LOCKED</StatusBadge>
+          <RoomCard onClick={() => onSelectRoom('space')}>
+            <StatusBadge>AVAILABLE</StatusBadge>
             <RoomIcon>🚀</RoomIcon>
             <RoomTitle>Space Station</RoomTitle>
             <RoomDescription>
-              Emergency on the International Space Station. Query crew logs, oxygen levels, and system failures to save the mission.
+              Stabilise the Helios orbital station after a cascade failure. Analyse crew rosters, sensor telemetry, and maintenance risks to save the mission.
             </RoomDescription>
-            <RoomMeta style={{color: '#666'}}>
-              COMING SOON
+            <RoomMeta>
+              5 STAGES
             </RoomMeta>
           </RoomCard>
         </RoomsGrid>

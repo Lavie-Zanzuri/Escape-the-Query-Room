@@ -79,6 +79,12 @@ const SQLEditor = ({ roomId = 'sample', onQuerySuccess, hideDbInfo = false }) =>
           tables: 'slot_machines, players, games, employees, suspicious_events',
           icon: '🎰'
         };
+      case 'space':
+        return {
+          name: 'Orbital Space Station Database',
+          tables: 'modules, crew_members, system_alerts, sensor_readings, maintenance_logs',
+          icon: '🚀'
+        };
       case 'sample':
       default:
         return {

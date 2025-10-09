@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import MainMenu from './MainMenu';
 import FootballRoom from './components/FootballRoom';
 import CasinoRoom from './components/CasinoRoom';
+import SpaceStationRoom from './components/SpaceStationRoom';
 import SQLQuestCyber from './App';
 
 function RouterWrapper() {
@@ -13,6 +14,8 @@ function RouterWrapper() {
       setCurrentPage('football');
     } else if (roomId === 'casino') {
       setCurrentPage('casino');
+    } else if (roomId === 'space') {
+      setCurrentPage('space');
     } else if (roomId === 'cyber') {
       setCurrentPage('cyber');
     }
@@ -145,6 +148,66 @@ function RouterWrapper() {
         />
 
         <CasinoRoom onBack={handleBack} />
+      </>
+    );
+  }
+
+  if (currentPage === 'space') {
+    return (
+      <>
+        {/* SPACE STATION STYLE BACK BUTTON */}
+        <button
+          onClick={handleBack}
+          className="fixed top-6 left-6 z-[99999] group"
+          style={{
+            background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(56, 189, 248, 0.9) 100%)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            border: '3px solid rgba(125, 211, 252, 0.7)',
+            padding: '16px 32px',
+            borderRadius: '18px',
+            cursor: 'pointer',
+            fontWeight: '900',
+            fontSize: '1.1rem',
+            color: '#E0F2FE',
+            letterSpacing: '1.5px',
+            textTransform: 'uppercase',
+            boxShadow: '0 8px 32px rgba(56, 189, 248, 0.45), 0 0 0 1px rgba(148, 163, 184, 0.2)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            fontFamily: "'Arial Black', Arial, sans-serif"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 12px 40px rgba(56, 189, 248, 0.7), 0 0 60px rgba(165, 180, 252, 0.5), 0 0 0 1px rgba(244, 244, 245, 0.3)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(56, 189, 248, 1) 0%, rgba(99, 102, 241, 1) 100%)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+            e.currentTarget.style.boxShadow = '0 8px 32px rgba(56, 189, 248, 0.45), 0 0 0 1px rgba(148, 163, 184, 0.2)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(56, 189, 248, 0.9) 100%)';
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{
+              fontSize: '1.4rem',
+              display: 'inline-block',
+              transition: 'transform 0.3s ease'
+            }} className="group-hover:-translate-x-1">
+              ←
+            </span>
+            <span>MAIN MENU</span>
+          </div>
+        </button>
+
+        <div
+          className="fixed top-8 left-8 w-3 h-3 rounded-full animate-pulse pointer-events-none z-[99998]"
+          style={{
+            background: 'rgba(125, 211, 252, 1)',
+            boxShadow: '0 0 20px rgba(125, 211, 252, 0.8)'
+          }}
+        />
+
+        <SpaceStationRoom onBack={handleBack} />
       </>
     );
   }

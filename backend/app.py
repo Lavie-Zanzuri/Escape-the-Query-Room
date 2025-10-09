@@ -177,6 +177,126 @@ ROOM_DATA = {
                 ]
             }
         ]
+    },
+    'space': {
+        'name': 'Orbital Space Station',
+        'description': 'Stabilise the ISS Helios after a cascade of system failures',
+        'database_schema': {
+            'modules': ['module_id', 'module_name', 'function', 'oxygen_level', 'power_usage', 'status', 'pressure_kpa', 'last_inspection'],
+            'crew_members': ['crew_id', 'name', 'rank', 'specialization', 'assigned_module_id', 'shift', 'clearance_level', 'on_duty'],
+            'system_alerts': ['alert_id', 'module_id', 'alert_type', 'severity', 'detected_at', 'status', 'resolved_at'],
+            'sensor_readings': ['reading_id', 'module_id', 'sensor_type', 'value', 'status', 'recorded_at'],
+            'maintenance_logs': ['log_id', 'module_id', 'task', 'performed_by', 'task_date', 'next_due_date', 'risk_level']
+        },
+        'stages': [
+            {
+                'id': 1,
+                'title': 'Telemetry Uplink',
+                'description': 'Show every module with its name, function, status, and oxygen level.',
+                'story': 'Mission control needs a quick snapshot of all station modules before we decide the next move.',
+                'database_info': '''Available Tables:
+🛰️ modules (module_id, module_name, function, oxygen_level, power_usage, status, pressure_kpa, last_inspection)
+👩‍🚀 crew_members (crew_id, name, rank, specialization, assigned_module_id, shift, clearance_level, on_duty)
+🚨 system_alerts (alert_id, module_id, alert_type, severity, detected_at, status, resolved_at)
+📡 sensor_readings (reading_id, module_id, sensor_type, value, status, recorded_at)
+🛠️ maintenance_logs (log_id, module_id, task, performed_by, task_date, next_due_date, risk_level)''',
+                'target_query': 'SELECT module_id, module_name, function, status, oxygen_level FROM modules ORDER BY module_id',
+                'expected_columns': ['module_id', 'module_name', 'function', 'status', 'oxygen_level'],
+                'hints': [
+                    'Use SELECT to specify the columns you need from modules.',
+                    'Include status and oxygen_level so mission control can see critical readings.',
+                    'Order by module_id to match the telemetry panel layout.'
+                ]
+            },
+            {
+                'id': 2,
+                'title': 'Oxygen Anomalies',
+                'description': 'List the modules where oxygen_level is under 75, lowest value first.',
+                'story': 'Any module under 75% oxygen is unsafe—highlight the worst readings so the life-support team can respond.',
+                'database_info': '''Remember:
+🛰️ modules holds environmental stats for every compartment.
+Look for oxygen_level values below the safe 75% threshold.''',
+                'target_query': 'SELECT module_name, oxygen_level FROM modules WHERE oxygen_level < 75 ORDER BY oxygen_level ASC',
+                'expected_columns': ['module_name', 'oxygen_level'],
+                'validation': {
+                    'max_safe_level': 75,
+                    'expected_count': 3
+                },
+                'hints': [
+                    'Filter the modules table using a WHERE clause on oxygen_level.',
+                    'Compare oxygen_level against the 75 threshold.',
+                    'Sort ascending so the worst readings appear first.'
+                ]
+            },
+            {
+                'id': 3,
+                'title': 'Crew Deployment',
+                'description': 'Find on-duty crew members (clearance >= 4) who are assigned to critical modules.',
+                'story': 'We only have a couple of specialists inside the danger zones—verify exactly who is already in place.',
+                'database_info': '''Need-to-know:
+🧑‍🚀 crew_members links each astronaut to a module via assigned_module_id.
+Only on_duty crew with clearance_level >= 4 can respond immediately.
+Find them in modules flagged as Critical.''',
+                'target_query': 'SELECT c.name, c.rank, m.module_name FROM crew_members c JOIN modules m ON c.assigned_module_id = m.module_id WHERE m.status = "Critical" AND c.clearance_level >= 4 AND c.on_duty = 1 ORDER BY c.name',
+                'expected_columns': ['name', 'rank', 'module_name'],
+                'validation': {
+                    'required_clearance': 4,
+                    'require_on_duty': True,
+                    'module_status': 'Critical',
+                    'expected_names': ['Engineer Sora Kim', 'Specialist Amina Chen']
+                },
+                'hints': [
+                    'You must join crew_members to modules using the assigned_module_id.',
+                    'Filter to modules where status is Critical.',
+                    'Remember to require clearance at least 4 and on-duty crew only.'
+                ]
+            },
+            {
+                'id': 4,
+                'title': 'Critical Alerts Board',
+                'description': 'Show active critical alerts with module names and the time they were detected.',
+                'story': 'Command wants the current alarm list in one table—module, alert, and timestamp.',
+                'database_info': '''Tip:
+🚨 system_alerts stores each alarm. Look for severity = "Critical" and status = "Active".
+Join to modules to translate module_id into a human-readable name.''',
+                'target_query': 'SELECT a.alert_id, m.module_name, a.alert_type, a.detected_at FROM system_alerts a JOIN modules m ON a.module_id = m.module_id WHERE a.status = "Active" AND a.severity = "Critical" ORDER BY a.detected_at',
+                'expected_columns': ['alert_id', 'module_name', 'alert_type', 'detected_at'],
+                'validation': {
+                    'expected_count': 2,
+                    'required_status': 'Active',
+                    'required_severity': 'Critical'
+                },
+                'hints': [
+                    'Join system_alerts with modules so you can show which area is affected.',
+                    'Filter by both status and severity to isolate critical emergencies.',
+                    'Order by detected_at to see the timeline of failures.'
+                ]
+            },
+            {
+                'id': 5,
+                'title': 'Evacuation Priority',
+                'description': 'Report the critical module with a warning pressure sensor and a high-risk maintenance task.',
+                'story': 'Combine the pressure readings and maintenance backlog to flag which compartment must evacuate first.',
+                'database_info': '''Final intel:
+📡 sensor_readings tracks live metrics like pressure.
+🛠️ maintenance_logs shows outstanding work and risk levels.
+Focus on modules where status is Critical, pressure sensors report Warning, and risk_level is High.''',
+                'target_query': 'SELECT m.module_name, s.value AS pressure_kpa, l.task, l.next_due_date FROM modules m JOIN sensor_readings s ON m.module_id = s.module_id JOIN maintenance_logs l ON m.module_id = l.module_id WHERE m.status = "Critical" AND s.sensor_type = "Pressure" AND s.status = "Warning" AND l.risk_level = "High" ORDER BY s.value ASC',
+                'expected_columns': ['module_name', 'pressure_kpa', 'task', 'next_due_date'],
+                'validation': {
+                    'expected_count': 1,
+                    'sensor_type': 'Pressure',
+                    'sensor_status': 'Warning',
+                    'module_status': 'Critical',
+                    'risk_level': 'High'
+                },
+                'hints': [
+                    'You will need multiple JOINs across modules, sensor_readings, and maintenance_logs.',
+                    'Filter sensor_readings to only the pressure sensor in a warning state.',
+                    'Limit to critical modules and HIGH risk maintenance tasks to find the evacuation priority.'
+                ]
+            }
+        ]
     }
 }
 
@@ -562,6 +682,111 @@ def validate_football_stage(stage, results, row_count):
     }
 
 
+def validate_space_stage(stage, results, row_count):
+    """Validation rules for the Orbital Space Station room."""
+
+    if stage == 1:
+        if row_count < 6:
+            return {
+                'valid': False,
+                'message': 'Mission control expected telemetry for every module. Make sure you are selecting all modules.'
+            }
+
+        if results:
+            first_row = results[0]
+            required = {'module_id', 'module_name', 'function', 'status', 'oxygen_level'}
+            if not required.issubset(first_row.keys()):
+                return {
+                    'valid': False,
+                    'message': 'Your report is missing critical module fields. Double-check the columns you SELECT.'
+                }
+
+        return {
+            'valid': True,
+            'message': 'Telemetry uplink stable. All modules reported in from the Helios station.'
+        }
+
+    if stage == 2:
+        expected_count = 3
+        if row_count != expected_count:
+            return {
+                'valid': False,
+                'message': 'There should be exactly three modules under the oxygen threshold. Verify your WHERE filter and ordering.'
+            }
+
+        for row in results:
+            oxygen = row.get('oxygen_level')
+            if oxygen is None or float(oxygen) >= 75:
+                return {
+                    'valid': False,
+                    'message': 'One of the returned modules is not below 75% oxygen. Tighten the oxygen_level condition.'
+                }
+
+        return {
+            'valid': True,
+            'message': 'Oxygen anomalies identified. Life-support teams are moving to seal those modules.'
+        }
+
+    if stage == 3:
+        expected_names = {'Engineer Sora Kim', 'Specialist Amina Chen'}
+        names_returned = {row.get('name') for row in results}
+
+        if names_returned != expected_names:
+            return {
+                'valid': False,
+                'message': 'You need the on-duty specialists inside the critical modules. Cross-check the module status, clearance, and duty rosters.'
+            }
+
+        return {
+            'valid': True,
+            'message': 'Crew deployment confirmed. High-clearance specialists are ready inside the critical zones.'
+        }
+
+    if stage == 4:
+        expected_alerts = {'Helios Reactor', 'Luna Greenhouse'}
+        if row_count != len(expected_alerts):
+            return {
+                'valid': False,
+                'message': 'Mission control still sees two active critical alarms. Make sure you are filtering by severity and status.'
+            }
+
+        modules = {row.get('module_name') for row in results}
+        if modules != expected_alerts:
+            return {
+                'valid': False,
+                'message': 'One of the alerts you reported is not critical or not active. Re-run the diagnostics filter.'
+            }
+
+        return {
+            'valid': True,
+            'message': 'Critical alerts board synced. Command has eyes on every unresolved emergency.'
+        }
+
+    if stage == 5:
+        if row_count != 1:
+            return {
+                'valid': False,
+                'message': 'Only one module meets the pressure warning and high-risk maintenance criteria. Revisit your JOIN logic and filters.'
+            }
+
+        row = results[0]
+        if row.get('module_name') != 'Helios Reactor':
+            return {
+                'valid': False,
+                'message': 'The Helios Reactor is the evacuation priority. Review the maintenance risk levels and pressure sensor status.'
+            }
+
+        return {
+            'valid': True,
+            'message': 'Evacuation priority locked. Helios Reactor teams are withdrawing to the safe corridor.'
+        }
+
+    return {
+        'valid': False,
+        'message': 'Unknown stage number.'
+    }
+
+
 @app.route('/api/validate-query/<room_id>/<int:stage>', methods=['POST'])
 def validate_query(room_id, stage):
     """
@@ -575,7 +800,10 @@ def validate_query(room_id, stage):
         if room_id == 'football':
             validation = validate_football_stage(stage, results, row_count)
             return jsonify(validation)
-        
+        if room_id == 'space':
+            validation = validate_space_stage(stage, results, row_count)
+            return jsonify(validation)
+
         return jsonify({
             'valid': False,
             'message': f'Validation not implemented for room: {room_id}'
@@ -965,6 +1193,147 @@ def create_casino_database():
     finally:
         conn.close()
 
+
+def create_space_database():
+    """Create orbital space station database with mission-critical telemetry."""
+    db_path = 'database/space.db'
+
+    if not os.path.exists('database'):
+        os.makedirs('database')
+
+    if os.path.exists(db_path):
+        print("🛰️ Space station database already exists")
+        return False
+
+    print("🛰️ Creating Orbital Space Station database...")
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('''
+        CREATE TABLE modules (
+            module_id INTEGER PRIMARY KEY,
+            module_name TEXT NOT NULL,
+            function TEXT NOT NULL,
+            oxygen_level REAL NOT NULL,
+            power_usage REAL NOT NULL,
+            status TEXT NOT NULL,
+            pressure_kpa REAL NOT NULL,
+            last_inspection TEXT NOT NULL
+        )
+        ''')
+
+        modules_data = [
+            (1, 'Aurora Habitat', 'Crew Quarters', 78.5, 62.4, 'Stable', 101.3, '2024-07-13'),
+            (2, 'Orion Lab', 'Research Laboratory', 71.2, 74.1, 'Alert', 96.4, '2024-07-11'),
+            (3, 'Helios Reactor', 'Power Core', 65.8, 92.7, 'Critical', 84.7, '2024-07-02'),
+            (4, 'Zephyr Dock', 'Docking Bay', 82.1, 55.6, 'Stable', 100.2, '2024-07-15'),
+            (5, 'Aegis Control', 'Command Center', 88.9, 68.3, 'Alert', 102.4, '2024-07-12'),
+            (6, 'Luna Greenhouse', 'Life Support', 69.5, 60.8, 'Critical', 88.9, '2024-07-08')
+        ]
+        cursor.executemany('INSERT INTO modules VALUES (?,?,?,?,?,?,?,?)', modules_data)
+
+        cursor.execute('''
+        CREATE TABLE crew_members (
+            crew_id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            rank TEXT NOT NULL,
+            specialization TEXT NOT NULL,
+            assigned_module_id INTEGER NOT NULL,
+            shift TEXT NOT NULL,
+            clearance_level INTEGER NOT NULL,
+            on_duty INTEGER NOT NULL,
+            FOREIGN KEY (assigned_module_id) REFERENCES modules(module_id)
+        )
+        ''')
+
+        crew_members_data = [
+            (1, 'Commander Elise Park', 'Commander', 'Mission Lead', 5, '00:00-08:00', 5, 1),
+            (2, 'Dr. Malik Rao', 'Chief Scientist', 'Bio Research', 2, '08:00-16:00', 4, 1),
+            (3, 'Engineer Sora Kim', 'Systems Engineer', 'Reactor Operations', 3, '16:00-00:00', 4, 1),
+            (4, 'Lt. Ivan Petrov', 'Security Officer', 'Security', 5, '16:00-00:00', 3, 0),
+            (5, 'Specialist Amina Chen', 'Life Support Specialist', 'Atmospheric Systems', 6, '16:00-00:00', 4, 1),
+            (6, 'Navigator Luis Ortega', 'Navigator', 'Flight Control', 1, '08:00-16:00', 3, 0)
+        ]
+        cursor.executemany('INSERT INTO crew_members VALUES (?,?,?,?,?,?,?,?)', crew_members_data)
+
+        cursor.execute('''
+        CREATE TABLE system_alerts (
+            alert_id INTEGER PRIMARY KEY,
+            module_id INTEGER NOT NULL,
+            alert_type TEXT NOT NULL,
+            severity TEXT NOT NULL,
+            detected_at TEXT NOT NULL,
+            status TEXT NOT NULL,
+            resolved_at TEXT,
+            FOREIGN KEY (module_id) REFERENCES modules(module_id)
+        )
+        ''')
+
+        system_alerts_data = [
+            (1, 3, 'Power Flux', 'Critical', '2024-08-01 14:05:00', 'Active', None),
+            (2, 2, 'Containment Leak', 'High', '2024-08-01 13:40:00', 'Investigating', None),
+            (3, 6, 'CO2 Spike', 'Critical', '2024-08-01 14:12:00', 'Active', None),
+            (4, 4, 'Docking Alarm', 'Medium', '2024-08-01 11:50:00', 'Resolved', '2024-08-01 12:05:00'),
+            (5, 5, 'Navigation Fault', 'High', '2024-08-01 13:10:00', 'Active', None)
+        ]
+        cursor.executemany('INSERT INTO system_alerts VALUES (?,?,?,?,?,?,?)', system_alerts_data)
+
+        cursor.execute('''
+        CREATE TABLE sensor_readings (
+            reading_id INTEGER PRIMARY KEY,
+            module_id INTEGER NOT NULL,
+            sensor_type TEXT NOT NULL,
+            value REAL NOT NULL,
+            status TEXT NOT NULL,
+            recorded_at TEXT NOT NULL,
+            FOREIGN KEY (module_id) REFERENCES modules(module_id)
+        )
+        ''')
+
+        sensor_readings_data = [
+            (1, 3, 'Pressure', 68.2, 'Warning', '2024-08-01 14:10:00'),
+            (2, 3, 'Temperature', 94.7, 'Critical', '2024-08-01 14:11:30'),
+            (3, 6, 'CO2', 850.0, 'Critical', '2024-08-01 14:09:45'),
+            (4, 6, 'Pressure', 72.5, 'Warning', '2024-08-01 14:10:20'),
+            (5, 2, 'Radiation', 0.92, 'Alert', '2024-08-01 13:50:00'),
+            (6, 5, 'Gyro Drift', 4.5, 'Alert', '2024-08-01 13:55:00')
+        ]
+        cursor.executemany('INSERT INTO sensor_readings VALUES (?,?,?,?,?,?)', sensor_readings_data)
+
+        cursor.execute('''
+        CREATE TABLE maintenance_logs (
+            log_id INTEGER PRIMARY KEY,
+            module_id INTEGER NOT NULL,
+            task TEXT NOT NULL,
+            performed_by TEXT NOT NULL,
+            task_date TEXT NOT NULL,
+            next_due_date TEXT NOT NULL,
+            risk_level TEXT NOT NULL,
+            FOREIGN KEY (module_id) REFERENCES modules(module_id)
+        )
+        ''')
+
+        maintenance_logs_data = [
+            (1, 3, 'Reinforce reactor coolant seals', 'Engineer Sora Kim', '2024-07-20', '2024-08-02', 'High'),
+            (2, 6, 'Replace CO2 scrubber filters', 'Specialist Amina Chen', '2024-07-24', '2024-08-03', 'Medium'),
+            (3, 2, 'Decontaminate lab iso-chambers', 'Dr. Malik Rao', '2024-07-15', '2024-08-05', 'High'),
+            (4, 5, 'Calibrate navigation gyros', 'Navigator Luis Ortega', '2024-07-18', '2024-08-06', 'Medium'),
+            (5, 1, 'Inspect habitat pressure seals', 'Commander Elise Park', '2024-07-10', '2024-08-07', 'Low')
+        ]
+        cursor.executemany('INSERT INTO maintenance_logs VALUES (?,?,?,?,?,?,?)', maintenance_logs_data)
+
+        conn.commit()
+        print("✅ Space station database created successfully!")
+        return True
+
+    except Exception as e:
+        print(f"❌ Error creating space database: {e}")
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
+
 @app.route('/api/rooms/casino', methods=['GET'])
 def get_casino_room():
     """Get casino room information"""
@@ -1135,6 +1504,16 @@ def get_ai_hint(room_id, stage_id):
             
             challenge = stage['description']
             db_info = stage['database_info']
+        elif room_id == 'space':
+            if room_id not in ROOM_DATA:
+                return jsonify({'error': 'Room not found'}), 404
+
+            stage = next((s for s in ROOM_DATA[room_id]['stages'] if s['id'] == stage_id), None)
+            if not stage:
+                return jsonify({'error': 'Stage not found'}), 404
+
+            challenge = stage['description']
+            db_info = stage['database_info']
         else:
             return jsonify({'error': 'Room not found'}), 404
         
@@ -1218,6 +1597,7 @@ def initialize_app():
         create_sample_database()
         create_football_database()
         create_casino_database()
+        create_space_database()
 
 if __name__ == '__main__':
     print("🚀 Starting SQL Quest Backend...")

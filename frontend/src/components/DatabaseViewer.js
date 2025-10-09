@@ -19,6 +19,13 @@ const DatabaseViewer = ({ roomId }) => {
       { name: 'games', icon: '🎮', description: 'Game history' },
       { name: 'employees', icon: '👨‍💼', description: 'Casino staff' },
       { name: 'suspicious_events', icon: '🚨', description: 'Suspicious activity' }
+    ],
+    space: [
+      { name: 'modules', icon: '🛰️', description: 'Station modules & status' },
+      { name: 'crew_members', icon: '👩‍🚀', description: 'Crew assignments' },
+      { name: 'system_alerts', icon: '🚨', description: 'Active alerts' },
+      { name: 'sensor_readings', icon: '📡', description: 'Live telemetry' },
+      { name: 'maintenance_logs', icon: '🛠️', description: 'Maintenance history' }
     ]
   };
 
