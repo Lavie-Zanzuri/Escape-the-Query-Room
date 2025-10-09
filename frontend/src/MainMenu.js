@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled, { keyframes, createGlobalStyle } from 'styled-components';
 
 const GlobalStyle = createGlobalStyle`
@@ -235,7 +235,60 @@ const StatusBadge = styled.div`
   font-weight: bold;
 `;
 
-function MainMenu({ onSelectRoom }) {
+function MainMenu({ onSelectRoom, username }) {
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [activeRoom, setActiveRoom] = useState('football');
+  const [leaderboards, setLeaderboards] = useState({});
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState(null);
+
+  const rooms = [
+    { id: 'football', label: 'Football Stadium', icon: '⚽' },
+    { id: 'casino', label: 'Casino Heist', icon: '🎰' },
+    { id: 'space', label: 'Space Station', icon: '🚀' }
+  ];
+
+  useEffect(() => {
+    if (!leaderboardOpen) return;
+    if (leaderboards[activeRoom]) return;
+
+    const fetchLeaderboard = async () => {
+      try {
+        setLeaderboardLoading(true);
+        setLeaderboardError(null);
+        const response = await fetch(`http://localhost:5000/api/leaderboard/${activeRoom}`);
+        const data = await response.json();
+        if (data.runs) {
+          setLeaderboards((prev) => ({ ...prev, [activeRoom]: data.runs }));
+        } else {
+          throw new Error(data.error || 'Failed to load leaderboard');
+        }
+      } catch (error) {
+        setLeaderboardError(error.message);
+      } finally {
+        setLeaderboardLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, [leaderboardOpen, activeRoom, leaderboards]);
+
+  const formatSeconds = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
+  const openLeaderboard = () => {
+    setLeaderboardOpen(true);
+    setActiveRoom('football');
+  };
+
+  const closeLeaderboard = () => {
+    setLeaderboardOpen(false);
+    setLeaderboardError(null);
+  };
+
   return (
     <>
       <GlobalStyle />
@@ -253,6 +306,11 @@ function MainMenu({ onSelectRoom }) {
           </TerminalText>
           <GameTitle>Escape the Query Room</GameTitle>
           <Subtitle>// SELECT YOUR ESCAPE ROOM //</Subtitle>
+          {username && (
+            <div className="mt-4 text-center text-sm text-emerald-300 font-bold">
+              Logged in as: <span className="text-white">{username}</span>
+            </div>
+          )}
         </TerminalHeader>
 
         <RoomsGrid>
@@ -292,7 +350,87 @@ function MainMenu({ onSelectRoom }) {
             </RoomMeta>
           </RoomCard>
         </RoomsGrid>
+
+        <button
+          onClick={openLeaderboard}
+          className="mt-12 px-8 py-4 rounded-2xl font-black text-lg bg-gradient-to-r from-emerald-400 to-cyan-500 text-black hover:from-emerald-300 hover:to-cyan-400 transition shadow-2xl"
+          style={{ boxShadow: '0 0 30px rgba(16, 185, 129, 0.5)' }}
+        >
+          🏅 View Global Leaderboards
+        </button>
       </MenuContainer>
+
+      {leaderboardOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-6">
+          <div className="bg-gray-900/95 border border-emerald-400/40 rounded-3xl shadow-2xl max-w-4xl w-full p-8 relative">
+            <button
+              onClick={closeLeaderboard}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
+            >
+              ×
+            </button>
+            <h2 className="text-3xl font-black text-white mb-6 flex items-center gap-3">
+              <span>🏆</span> Global Leaderboards
+            </h2>
+
+            <div className="flex gap-3 mb-6">
+              {rooms.map((room) => (
+                <button
+                  key={room.id}
+                  onClick={() => setActiveRoom(room.id)}
+                  className={`px-4 py-2 rounded-xl font-bold transition ${activeRoom === room.id ? 'bg-emerald-500 text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                >
+                  {room.icon} {room.label}
+                </button>
+              ))}
+            </div>
+
+            {leaderboardLoading ? (
+              <div className="text-center text-gray-300">Loading leaderboard...</div>
+            ) : leaderboardError ? (
+              <div className="text-center text-red-400">{leaderboardError}</div>
+            ) : (
+              <div className="overflow-hidden rounded-2xl border border-gray-700">
+                <table className="w-full">
+                  <thead className="bg-emerald-500/20 text-emerald-200 uppercase text-sm">
+                    <tr>
+                      <th className="py-3 px-4 text-left">Rank</th>
+                      <th className="py-3 px-4 text-left">Player</th>
+                      <th className="py-3 px-4 text-left">Score</th>
+                      <th className="py-3 px-4 text-left">Total Time</th>
+                      <th className="py-3 px-4 text-left">Completed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(leaderboards[activeRoom] || []).map((run, index) => {
+                      const isCurrentUser = username && run.username === username;
+                      return (
+                        <tr
+                          key={`${run.username}-${run.completed_at}`}
+                          className={`${index % 2 === 0 ? 'bg-gray-900/60' : 'bg-gray-800/40'} ${isCurrentUser ? 'border-l-4 border-emerald-400' : ''}`}
+                        >
+                          <td className="py-3 px-4 text-gray-300 font-bold">#{index + 1}</td>
+                          <td className="py-3 px-4 text-white font-semibold">{run.username}</td>
+                          <td className="py-3 px-4 text-emerald-300 font-black">{run.score}</td>
+                          <td className="py-3 px-4 text-gray-200">{formatSeconds(run.total_time)}</td>
+                          <td className="py-3 px-4 text-gray-500 text-sm">{new Date(run.completed_at).toLocaleString()}</td>
+                        </tr>
+                      );
+                    })}
+                    {(!leaderboards[activeRoom] || leaderboards[activeRoom].length === 0) && (
+                      <tr>
+                        <td className="py-6 px-4 text-center text-gray-400" colSpan={5}>
+                          No runs recorded yet. Be the first to set a record!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

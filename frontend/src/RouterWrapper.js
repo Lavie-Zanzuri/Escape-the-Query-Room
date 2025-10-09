@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainMenu from './MainMenu';
 import FootballRoom from './components/FootballRoom';
 import CasinoRoom from './components/CasinoRoom';
@@ -7,6 +7,21 @@ import SQLQuestCyber from './App';
 
 function RouterWrapper() {
   const [currentPage, setCurrentPage] = useState('menu');
+  const [username, setUsername] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('sqlQuestUsername') || '';
+  });
+  const [pendingName, setPendingName] = useState('');
+  const [showRegistration, setShowRegistration] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return !localStorage.getItem('sqlQuestUsername');
+  });
+
+  useEffect(() => {
+    if (username) {
+      localStorage.setItem('sqlQuestUsername', username);
+    }
+  }, [username]);
 
   const handleSelectRoom = (roomId) => {
     console.log('Selected room:', roomId);
@@ -26,8 +41,49 @@ function RouterWrapper() {
     setCurrentPage('menu');
   };
 
+  const handleRegister = (event) => {
+    event.preventDefault();
+    const trimmed = pendingName.trim();
+    if (!trimmed) {
+      return;
+    }
+    setUsername(trimmed);
+    setShowRegistration(false);
+    setCurrentPage('menu');
+  };
+
+  if (showRegistration) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900 p-6">
+        <form
+          onSubmit={handleRegister}
+          className="bg-black/80 border border-gray-700 rounded-3xl p-10 max-w-md w-full shadow-2xl space-y-6"
+        >
+          <div>
+            <h1 className="text-3xl font-black text-white mb-2 text-center">Welcome to SQL Quest</h1>
+            <p className="text-gray-300 text-center text-sm">
+              Enter a codename so we can track your progress on the global leaderboards.
+            </p>
+          </div>
+          <input
+            value={pendingName}
+            onChange={(e) => setPendingName(e.target.value)}
+            placeholder="Type your codename..."
+            className="w-full px-4 py-3 rounded-xl bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-emerald-400"
+          />
+          <button
+            type="submit"
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-black font-black tracking-wide hover:opacity-90 transition"
+          >
+            Enter the Main Deck
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   if (currentPage === 'menu') {
-    return <MainMenu onSelectRoom={handleSelectRoom} />;
+    return <MainMenu onSelectRoom={handleSelectRoom} username={username} />;
   }
 
   if (currentPage === 'football') {
@@ -86,7 +142,7 @@ function RouterWrapper() {
           }}
         />
 
-        <FootballRoom onBack={handleBack} />
+        <FootballRoom onBack={handleBack} username={username} />
       </>
     );
   }
@@ -147,7 +203,7 @@ function RouterWrapper() {
           }}
         />
 
-        <CasinoRoom onBack={handleBack} />
+        <CasinoRoom onBack={handleBack} username={username} />
       </>
     );
   }
@@ -207,7 +263,7 @@ function RouterWrapper() {
           }}
         />
 
-        <SpaceStationRoom onBack={handleBack} />
+        <SpaceStationRoom onBack={handleBack} username={username} />
       </>
     );
   }

@@ -55,6 +55,15 @@ class GameProgress(db.Model):
     score = db.Column(db.Integer, default=0)
     completed_at = db.Column(db.DateTime)
 
+
+class RoomRun(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), nullable=False)
+    room_id = db.Column(db.String(40), nullable=False)
+    total_time = db.Column(db.Integer, nullable=False)
+    score = db.Column(db.Integer, nullable=False)
+    completed_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 # Room Data Configuration
 ROOM_DATA = {
     'football': {
@@ -497,6 +506,58 @@ def create_user():
             'success': False, 
             'error': f'Database error: {str(e)}'
         }), 500
+
+
+@app.route('/api/leaderboard/run', methods=['POST'])
+def record_room_run():
+    try:
+        data = request.get_json() or {}
+        username = (data.get('username') or '').strip()
+        room_id = (data.get('room_id') or '').strip()
+        total_time = data.get('total_time')
+        score = data.get('score')
+
+        if not username or not room_id or total_time is None or score is None:
+            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+
+        run = RoomRun(
+            username=username,
+            room_id=room_id,
+            total_time=int(total_time),
+            score=int(score)
+        )
+        db.session.add(run)
+        db.session.commit()
+
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Failed to record run: {str(e)}'}), 500
+
+
+@app.route('/api/leaderboard/<room_id>', methods=['GET'])
+def get_leaderboard(room_id):
+    try:
+        runs = (RoomRun.query
+                .filter_by(room_id=room_id)
+                .order_by(RoomRun.score.desc(), RoomRun.total_time.asc())
+                .limit(10)
+                .all())
+
+        payload = []
+        for run in runs:
+            payload.append({
+                'username': run.username,
+                'room_id': run.room_id,
+                'total_time': run.total_time,
+                'score': run.score,
+                'completed_at': run.completed_at.isoformat()
+            })
+
+        return jsonify({'runs': payload})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Failed to load leaderboard: {str(e)}'}), 500
+
 
 # ========================================
 # VALIDATION SYSTEM

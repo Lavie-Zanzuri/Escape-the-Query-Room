@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SQLEditor from './SQLEditor';
 import DatabaseViewer from './DatabaseViewer';
 
-const SpaceStationRoom = ({ onBack }) => {
+const SpaceStationRoom = ({ onBack, username }) => {
   const [currentStage, setCurrentStage] = useState(1);
   const [roomData, setRoomData] = useState(null);
   const [stageData, setStageData] = useState(null);
@@ -29,6 +29,7 @@ const SpaceStationRoom = ({ onBack }) => {
   const MAX_AI_HINTS = 1;
 
   const missionSuccessSound = new Audio('/audio/jackpot.mp3');
+  const [runSubmitted, setRunSubmitted] = useState(false);
 
   useEffect(() => {
     loadRoomData();
@@ -56,6 +57,7 @@ const SpaceStationRoom = ({ onBack }) => {
       const data = await response.json();
       setRoomData(data);
       setLoading(false);
+      setRunSubmitted(false);
     } catch (error) {
       console.error('Error loading space room data:', error);
       setLoading(false);
@@ -101,6 +103,12 @@ const SpaceStationRoom = ({ onBack }) => {
           const timeBonus = calculateTimeBonus(finalTime);
           const hintPenalty = hintsUsedInStage * 20;
           const stageScore = Math.max(0, timeBonus - hintPenalty);
+
+          if (roomData && currentStage === roomData.stages.length && !runSubmitted) {
+            const finalScoreValue = totalScore + stageScore;
+            const finalTotalTime = stageTimes.reduce((sum, st) => sum + st.time, 0) + finalTime;
+            postRun(finalScoreValue, finalTotalTime);
+          }
 
           setStageTimes(prev => [...prev, {
             stage: currentStage,
@@ -209,6 +217,32 @@ const SpaceStationRoom = ({ onBack }) => {
       setValidationError('Error generating AI hint. Please try again later.');
     } finally {
       setIsLoadingAiHint(false);
+    }
+  };
+
+  const postRun = async (finalScoreValue, finalTotalTime) => {
+    if (!username || runSubmitted) {
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/leaderboard/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          room_id: 'space',
+          total_time: finalTotalTime,
+          score: finalScoreValue
+        })
+      });
+
+      const data = await response.json();
+      if (data && data.success) {
+        setRunSubmitted(true);
+      }
+    } catch (error) {
+      console.error('Failed to record leaderboard run:', error);
     }
   };
 

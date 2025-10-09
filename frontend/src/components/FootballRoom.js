@@ -3,7 +3,7 @@ import SQLEditor from './SQLEditor';
 import DatabaseViewer from './DatabaseViewer';
 import { Trophy, Target, Zap, Clock, Award, Lightbulb, CheckCircle2, AlertTriangle } from 'lucide-react';
 
-const FootballRoom = ({ onBack }) => {
+const FootballRoom = ({ onBack, username }) => {
   const [currentStage, setCurrentStage] = useState(1);
   const [roomData, setRoomData] = useState(null);
   const [stageData, setStageData] = useState(null);
@@ -32,6 +32,7 @@ const FootballRoom = ({ onBack }) => {
   const MAX_AI_HINTS = 1;
 
   const goalSound = new Audio('/audio/goooooaall.mp3');
+  const [runSubmitted, setRunSubmitted] = useState(false);
 
   useEffect(() => {
     loadRoomData();
@@ -59,6 +60,7 @@ const FootballRoom = ({ onBack }) => {
       const data = await response.json();
       setRoomData(data);
       setLoading(false);
+      setRunSubmitted(false);
     } catch (error) {
       console.error('Error loading room data:', error);
       setLoading(false);
@@ -105,7 +107,13 @@ const FootballRoom = ({ onBack }) => {
           const timeBonus = calculateTimeBonus(finalTime);
           const hintPenalty = hintsUsedInStage * 20;
           const stageScore = Math.max(0, timeBonus - hintPenalty);
-          
+
+          if (roomData && currentStage === roomData.stages.length && !runSubmitted) {
+            const finalScoreValue = totalScore + stageScore;
+            const finalTotalTime = stageTimes.reduce((sum, st) => sum + st.time, 0) + finalTime;
+            postRun(finalScoreValue, finalTotalTime);
+          }
+
           setStageTimes(prev => [...prev, {
             stage: currentStage,
             time: finalTime,
@@ -215,6 +223,32 @@ const FootballRoom = ({ onBack }) => {
       setValidationError('Could not connect to AI service. Try the regular hints instead!');
     } finally {
       setIsLoadingAiHint(false);
+    }
+  };
+
+  const postRun = async (finalScoreValue, finalTotalTime) => {
+    if (!username || runSubmitted) {
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/leaderboard/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          room_id: 'football',
+          total_time: finalTotalTime,
+          score: finalScoreValue
+        })
+      });
+
+      const data = await response.json();
+      if (data && data.success) {
+        setRunSubmitted(true);
+      }
+    } catch (error) {
+      console.error('Failed to record leaderboard run:', error);
     }
   };
 
