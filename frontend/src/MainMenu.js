@@ -128,6 +128,19 @@ const Subtitle = styled.div`
   color: #00ff41;
 `;
 
+const UsernameDisplay = styled.div`
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: rgba(0,255,65,0.7);
+  font-weight: bold;
+  
+  span {
+    color: #00ff41;
+    text-shadow: 0 0 10px #00ff41;
+  }
+`;
+
 const RoomsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -171,18 +184,6 @@ const RoomCard = styled.div`
 
   &:hover::before {
     left: 100%;
-  }
-
-  &.coming-soon {
-    opacity: 0.5;
-    cursor: not-allowed;
-    border-color: #666;
-  }
-
-  &.coming-soon:hover {
-    transform: none;
-    box-shadow: none;
-    background: rgba(0,0,0,0.8);
   }
 `;
 
@@ -235,6 +236,154 @@ const StatusBadge = styled.div`
   font-weight: bold;
 `;
 
+const LeaderboardButton = styled.button`
+  margin-top: 3rem;
+  padding: 1.2rem 2.5rem;
+  background: rgba(0,0,0,0.8);
+  border: 2px solid #00ff41;
+  color: #00ff41;
+  font-family: 'Courier New', monospace;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(0,255,65,0.3);
+
+  &:hover {
+    background: rgba(0,255,65,0.1);
+    box-shadow: 0 0 40px rgba(0,255,65,0.6);
+    transform: translateY(-3px);
+  }
+`;
+
+const LeaderboardOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+`;
+
+const LeaderboardModal = styled.div`
+  background: rgba(0,0,0,0.95);
+  border: 3px solid #00ff41;
+  border-radius: 0;
+  box-shadow: 0 0 50px rgba(0,255,65,0.5);
+  max-width: 900px;
+  width: 100%;
+  padding: 2.5rem;
+  position: relative;
+  font-family: 'Courier New', monospace;
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: 2px solid #00ff41;
+  color: #00ff41;
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(0,255,65,0.2);
+    transform: rotate(90deg);
+  }
+`;
+
+const LeaderboardTitle = styled.h2`
+  font-size: 2.5rem;
+  color: #00ff41;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-shadow: 0 0 15px #00ff41;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const RoomTabs = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+`;
+
+const RoomTab = styled.button`
+  padding: 0.8rem 1.5rem;
+  background: ${props => props.active ? 'rgba(0,255,65,0.2)' : 'rgba(0,0,0,0.6)'};
+  border: 2px solid ${props => props.active ? '#00ff41' : '#666'};
+  color: ${props => props.active ? '#00ff41' : '#999'};
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #00ff41;
+    color: #00ff41;
+  }
+`;
+
+const LeaderboardTable = styled.div`
+  border: 2px solid rgba(0,255,65,0.3);
+  overflow: hidden;
+`;
+
+const TableHeader = styled.div`
+  display: grid;
+  grid-template-columns: 80px 1fr 120px 120px 180px;
+  background: rgba(0,255,65,0.15);
+  border-bottom: 2px solid #00ff41;
+  padding: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  color: #00ff41;
+`;
+
+const TableRow = styled.div`
+  display: grid;
+  grid-template-columns: 80px 1fr 120px 120px 180px;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0,255,65,0.1);
+  background: ${props => props.index % 2 === 0 ? 'rgba(0,0,0,0.6)' : 'rgba(0,255,65,0.05)'};
+  color: ${props => props.isCurrentUser ? '#ffd700' : '#00ff41'};
+  border-left: ${props => props.isCurrentUser ? '4px solid #ffd700' : 'none'};
+  
+  &:hover {
+    background: rgba(0,255,65,0.1);
+  }
+`;
+
+const EmptyState = styled.div`
+  padding: 3rem;
+  text-align: center;
+  color: rgba(0,255,65,0.5);
+  font-style: italic;
+`;
+
+const LoadingState = styled.div`
+  padding: 3rem;
+  text-align: center;
+  color: #00ff41;
+  font-size: 1.2rem;
+  animation: ${pulse} 1.5s infinite;
+`;
+
 function MainMenu({ onSelectRoom, username }) {
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [activeRoom, setActiveRoom] = useState('football');
@@ -279,16 +428,6 @@ function MainMenu({ onSelectRoom, username }) {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const openLeaderboard = () => {
-    setLeaderboardOpen(true);
-    setActiveRoom('football');
-  };
-
-  const closeLeaderboard = () => {
-    setLeaderboardOpen(false);
-    setLeaderboardError(null);
-  };
-
   return (
     <>
       <GlobalStyle />
@@ -307,9 +446,9 @@ function MainMenu({ onSelectRoom, username }) {
           <GameTitle>Escape the Query Room</GameTitle>
           <Subtitle>// SELECT YOUR ESCAPE ROOM //</Subtitle>
           {username && (
-            <div className="mt-4 text-center text-sm text-emerald-300 font-bold">
-              Logged in as: <span className="text-white">{username}</span>
-            </div>
+            <UsernameDisplay>
+              LOGGED IN AS: <span>{username}</span>
+            </UsernameDisplay>
           )}
         </TerminalHeader>
 
@@ -321,9 +460,7 @@ function MainMenu({ onSelectRoom, username }) {
             <RoomDescription>
               Infiltrate the UEFA database to expose corruption. Navigate through player records, team finances, and suspicious match results.
             </RoomDescription>
-            <RoomMeta>
-              5 STAGES
-            </RoomMeta>
+            <RoomMeta>5 STAGES</RoomMeta>
           </RoomCard>
 
           <RoomCard onClick={() => onSelectRoom('casino')}>
@@ -333,9 +470,7 @@ function MainMenu({ onSelectRoom, username }) {
             <RoomDescription>
               Hack into the casino's rigged system and expose the fraud. Track rigged machines, identify victims, and catch the mastermind.
             </RoomDescription>
-            <RoomMeta>
-              5 STAGES
-            </RoomMeta>
+            <RoomMeta>5 STAGES</RoomMeta>
           </RoomCard>
 
           <RoomCard onClick={() => onSelectRoom('space')}>
@@ -345,91 +480,74 @@ function MainMenu({ onSelectRoom, username }) {
             <RoomDescription>
               Stabilise the Helios orbital station after a cascade failure. Analyse crew rosters, sensor telemetry, and maintenance risks to save the mission.
             </RoomDescription>
-            <RoomMeta>
-              5 STAGES
-            </RoomMeta>
+            <RoomMeta>5 STAGES</RoomMeta>
           </RoomCard>
         </RoomsGrid>
 
-        <button
-          onClick={openLeaderboard}
-          className="mt-12 px-8 py-4 rounded-2xl font-black text-lg bg-gradient-to-r from-emerald-400 to-cyan-500 text-black hover:from-emerald-300 hover:to-cyan-400 transition shadow-2xl"
-          style={{ boxShadow: '0 0 30px rgba(16, 185, 129, 0.5)' }}
-        >
-          🏅 View Global Leaderboards
-        </button>
+        <LeaderboardButton onClick={() => setLeaderboardOpen(true)}>
+          🏅 VIEW GLOBAL LEADERBOARDS
+        </LeaderboardButton>
       </MenuContainer>
 
       {leaderboardOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-6">
-          <div className="bg-gray-900/95 border border-emerald-400/40 rounded-3xl shadow-2xl max-w-4xl w-full p-8 relative">
-            <button
-              onClick={closeLeaderboard}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
-            >
-              ×
-            </button>
-            <h2 className="text-3xl font-black text-white mb-6 flex items-center gap-3">
-              <span>🏆</span> Global Leaderboards
-            </h2>
+        <LeaderboardOverlay onClick={() => setLeaderboardOpen(false)}>
+          <LeaderboardModal onClick={(e) => e.stopPropagation()}>
+            <CloseButton onClick={() => setLeaderboardOpen(false)}>×</CloseButton>
+            
+            <LeaderboardTitle>
+              <span>🏆</span> GLOBAL LEADERBOARDS
+            </LeaderboardTitle>
 
-            <div className="flex gap-3 mb-6">
+            <RoomTabs>
               {rooms.map((room) => (
-                <button
+                <RoomTab
                   key={room.id}
+                  active={activeRoom === room.id}
                   onClick={() => setActiveRoom(room.id)}
-                  className={`px-4 py-2 rounded-xl font-bold transition ${activeRoom === room.id ? 'bg-emerald-500 text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                 >
                   {room.icon} {room.label}
-                </button>
+                </RoomTab>
               ))}
-            </div>
+            </RoomTabs>
 
             {leaderboardLoading ? (
-              <div className="text-center text-gray-300">Loading leaderboard...</div>
+              <LoadingState>&gt; LOADING DATA...</LoadingState>
             ) : leaderboardError ? (
-              <div className="text-center text-red-400">{leaderboardError}</div>
+              <EmptyState>&gt; ERROR: {leaderboardError}</EmptyState>
             ) : (
-              <div className="overflow-hidden rounded-2xl border border-gray-700">
-                <table className="w-full">
-                  <thead className="bg-emerald-500/20 text-emerald-200 uppercase text-sm">
-                    <tr>
-                      <th className="py-3 px-4 text-left">Rank</th>
-                      <th className="py-3 px-4 text-left">Player</th>
-                      <th className="py-3 px-4 text-left">Score</th>
-                      <th className="py-3 px-4 text-left">Total Time</th>
-                      <th className="py-3 px-4 text-left">Completed</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(leaderboards[activeRoom] || []).map((run, index) => {
-                      const isCurrentUser = username && run.username === username;
-                      return (
-                        <tr
-                          key={`${run.username}-${run.completed_at}`}
-                          className={`${index % 2 === 0 ? 'bg-gray-900/60' : 'bg-gray-800/40'} ${isCurrentUser ? 'border-l-4 border-emerald-400' : ''}`}
-                        >
-                          <td className="py-3 px-4 text-gray-300 font-bold">#{index + 1}</td>
-                          <td className="py-3 px-4 text-white font-semibold">{run.username}</td>
-                          <td className="py-3 px-4 text-emerald-300 font-black">{run.score}</td>
-                          <td className="py-3 px-4 text-gray-200">{formatSeconds(run.total_time)}</td>
-                          <td className="py-3 px-4 text-gray-500 text-sm">{new Date(run.completed_at).toLocaleString()}</td>
-                        </tr>
-                      );
-                    })}
-                    {(!leaderboards[activeRoom] || leaderboards[activeRoom].length === 0) && (
-                      <tr>
-                        <td className="py-6 px-4 text-center text-gray-400" colSpan={5}>
-                          No runs recorded yet. Be the first to set a record!
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <LeaderboardTable>
+                <TableHeader>
+                  <div>RANK</div>
+                  <div>PLAYER</div>
+                  <div>SCORE</div>
+                  <div>TIME</div>
+                  <div>COMPLETED</div>
+                </TableHeader>
+                {(leaderboards[activeRoom] || []).length > 0 ? (
+                  (leaderboards[activeRoom] || []).map((run, index) => {
+                    const isCurrentUser = username && run.username === username;
+                    return (
+                      <TableRow key={`${run.username}-${run.completed_at}`} index={index} isCurrentUser={isCurrentUser}>
+                        <div>#{index + 1}</div>
+                        <div>{run.username}</div>
+                        <div>{run.score}</div>
+                        <div>{formatSeconds(run.total_time)}</div>
+                        <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                          {new Date(run.completed_at).toLocaleString()}
+                        </div>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <EmptyState>
+                    &gt; NO RECORDS FOUND<br/>
+                    &gt; BE THE FIRST TO SET A RECORD
+                  </EmptyState>
+                )}
+              </LeaderboardTable>
             )}
-          </div>
-        </div>
+          </LeaderboardModal>
+        </LeaderboardOverlay>
       )}
     </>
   );
