@@ -113,7 +113,6 @@ cd backend
 python -m venv venv
 source venv/bin/activate        # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-pip install google-generativeai
 ```
 
 Create a `.env` file in the `backend` folder:
