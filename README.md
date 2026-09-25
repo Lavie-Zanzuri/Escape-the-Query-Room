@@ -102,8 +102,8 @@ When a room is completed, the total score and time are saved to the leaderboard.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/Lavie-Zanzuri/From-Idea-To-Reality---App-Using-AI-Final-project.git
-cd From-Idea-To-Reality---App-Using-AI-Final-project
+git clone https://github.com/Lavie-Zanzuri/Escape-the-Query-Room.git
+cd Escape-the-Query-Room
 ```
 
 ### 2. Run the backend
