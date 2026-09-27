@@ -405,7 +405,7 @@ function MainMenu({ onSelectRoom, username }) {
       try {
         setLeaderboardLoading(true);
         setLeaderboardError(null);
-        const response = await fetch(`http://localhost:5000/api/leaderboard/${activeRoom}`);
+        const response = await fetch(`/api/leaderboard/${activeRoom}`);
         const data = await response.json();
         if (data.runs) {
           setLeaderboards((prev) => ({ ...prev, [activeRoom]: data.runs }));

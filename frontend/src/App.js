@@ -510,7 +510,7 @@ function SQLQuestCyber() {
 
   const testConnection = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/test');
+      const response = await fetch('/api/test');
       const data = await response.json();
       setIsConnected(true);
       setConnectionStatus('SECURE CONNECTION');
@@ -539,7 +539,7 @@ function SQLQuestCyber() {
     const startTime = Date.now();
 
     try {
-      const response = await fetch('http://localhost:5000/api/execute-sql', {
+      const response = await fetch('/api/execute-sql', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: query.trim() }),

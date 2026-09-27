@@ -34,7 +34,7 @@ const DatabaseViewer = ({ roomId }) => {
   const fetchTableData = async (tableName) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/execute-sql/${roomId}`, {
+      const response = await fetch(`/api/execute-sql/${roomId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: `SELECT * FROM ${tableName}` })

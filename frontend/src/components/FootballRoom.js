@@ -56,7 +56,7 @@ const FootballRoom = ({ onBack, username }) => {
 
   const loadRoomData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/rooms/football');
+      const response = await fetch('/api/rooms/football');
       const data = await response.json();
       setRoomData(data);
       setLoading(false);
@@ -69,7 +69,7 @@ const FootballRoom = ({ onBack, username }) => {
 
   const loadStageData = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/rooms/football/stage/${currentStage}`);
+      const response = await fetch(`/api/rooms/football/stage/${currentStage}`);
       const data = await response.json();
       setStageData(data);
       setStageComplete(false);
@@ -91,7 +91,7 @@ const FootballRoom = ({ onBack, username }) => {
       setLastQuery(result.query || '');
       
       try {
-        const response = await fetch(`http://localhost:5000/api/validate-query/football/${currentStage}`, {
+        const response = await fetch(`/api/validate-query/football/${currentStage}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -199,7 +199,7 @@ const FootballRoom = ({ onBack, username }) => {
     const allStageHints = stageData.hints || [];
 
     try {
-      const response = await fetch(`http://localhost:5000/api/ai-hint/football/${currentStage}`, {
+      const response = await fetch(`/api/ai-hint/football/${currentStage}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -232,7 +232,7 @@ const FootballRoom = ({ onBack, username }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/leaderboard/run', {
+      const response = await fetch('/api/leaderboard/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
