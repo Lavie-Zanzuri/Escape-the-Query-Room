@@ -54,7 +54,7 @@ const CasinoRoom = ({ onBack, username }) => {
 
   const loadRoomData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/rooms/casino');
+      const response = await fetch('/api/rooms/casino');
       const data = await response.json();
       setRoomData(data);
       setLoading(false);
@@ -67,7 +67,7 @@ const CasinoRoom = ({ onBack, username }) => {
 
   const loadStageData = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/rooms/casino/stage/${currentStage}`);
+      const response = await fetch(`/api/rooms/casino/stage/${currentStage}`);
       const data = await response.json();
       setStageData(data);
       setStageComplete(false);
@@ -88,7 +88,7 @@ const CasinoRoom = ({ onBack, username }) => {
     if (result.success && result.row_count > 0 && !stageComplete) {
       setLastQuery(result.query || '');
       try {
-        const response = await fetch(`http://localhost:5000/api/validate-query/casino/${currentStage}`, {
+        const response = await fetch(`/api/validate-query/casino/${currentStage}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -195,7 +195,7 @@ const CasinoRoom = ({ onBack, username }) => {
     const allStageHints = stageData?.hints || [];
 
     try {
-      const response = await fetch(`http://localhost:5000/api/ai-hint/casino/${currentStage}`, {
+      const response = await fetch(`/api/ai-hint/casino/${currentStage}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -227,7 +227,7 @@ const CasinoRoom = ({ onBack, username }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/leaderboard/run', {
+      const response = await fetch('/api/leaderboard/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
