@@ -20,8 +20,8 @@ const SQLEditor = ({ roomId = 'sample', onQuerySuccess, hideDbInfo = false }) =>
     try {
       // Use roomId to determine which database to query
       const endpoint = roomId === 'sample' 
-        ? 'http://localhost:5000/api/execute-sql'
-        : `http://localhost:5000/api/execute-sql/${roomId}`;
+        ? '/api/execute-sql'
+        : `/api/execute-sql/${roomId}`;
 
       const response = await fetch(endpoint, {
         method: 'POST',
