@@ -60,7 +60,7 @@ function RouterWrapper() {
           className="bg-black/80 border border-gray-700 rounded-3xl p-10 max-w-md w-full shadow-2xl space-y-6"
         >
           <div>
-            <h1 className="text-3xl font-black text-white mb-2 text-center">Welcome to SQL Quest</h1>
+            <h1 className="text-3xl font-black text-white mb-2 text-center">Welcome to Escape the Query Room</h1>
             <p className="text-gray-300 text-center text-sm">
               Enter a codename so we can track your progress on the global leaderboards.
             </p>
